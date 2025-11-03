@@ -89,6 +89,27 @@ export const useTasks = () => {
   const [tasks, setTasks] = useState(readStorage)
   const saveTimeoutRef = useRef(null)
 
+  // Flush any pending debounced save to localStorage synchronously.
+  // If a debounce timer exists, write the current tasks to storage and clear the timer.
+  const flushPendingSave = () => {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return
+    }
+
+    if (saveTimeoutRef.current) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+      } catch (e) {
+        // Best-effort: if storage write fails, just continue
+        // eslint-disable-next-line no-console
+        console.warn('Falha ao gravar tarefas no localStorage durante flush', e)
+      }
+
+      clearTimeout(saveTimeoutRef.current)
+      saveTimeoutRef.current = null
+    }
+  }
+
   // Debounced localStorage save for better performance
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) {
@@ -102,16 +123,18 @@ export const useTasks = () => {
 
     // Schedule new save
     saveTimeoutRef.current = setTimeout(() => {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+      } catch (e) {
+        // Best-effort: ignore storage errors here
+        // eslint-disable-next-line no-console
+        console.warn('Falha ao gravar tarefas no localStorage', e)
+      }
     }, STORAGE_DEBOUNCE_MS)
 
-    // Cleanup: Save immediately on unmount to prevent data loss
+    // Cleanup: flush pending save immediately on unmount to prevent data loss
     return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-        // Force immediate save before unmount to prevent data loss
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
-      }
+      flushPendingSave()
     }
   }, [tasks])
 
@@ -122,11 +145,17 @@ export const useTasks = () => {
     }
 
     const handleBeforeUnload = () => {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+      // Ensure any debounced save is flushed synchronously before the page unloads
+      flushPendingSave()
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
+    }
   }, [tasks])
 
   const addTask = useCallback((title, options = {}) => {

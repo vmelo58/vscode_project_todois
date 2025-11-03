@@ -3,24 +3,25 @@ import { FILTERS } from '../../../constants/filters.js'
 import { PROJECTS } from '../../../constants/projects.js'
 import './Sidebar.css'
 
-const FILTER_ICONS = {
+// Optimize: Move constants outside component to prevent recreation on every render
+const FILTER_ICONS = Object.freeze({
   [FILTERS.inbox.id]: '📥',
   [FILTERS.today.id]: '📅',
   [FILTERS.upcoming.id]: '🗓️',
   [FILTERS.personal.id]: PROJECTS.personal.icon,
   [FILTERS.work.id]: PROJECTS.work.icon,
-}
+})
 
-const PRIMARY_FILTERS = [
+const PRIMARY_FILTERS = Object.freeze([
   FILTERS.inbox,
   FILTERS.today,
   FILTERS.upcoming,
-]
+])
 
-const PROJECT_FILTERS = [
+const PROJECT_FILTERS = Object.freeze([
   FILTERS.personal,
   FILTERS.work,
-]
+])
 
 function Sidebar({ currentFilter, onFilterChange, filterCounts, isOpen, isMobile, onClose }) {
   const handleFilterClick = useCallback((filterId) => {
