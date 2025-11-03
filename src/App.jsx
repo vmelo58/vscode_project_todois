@@ -1,125 +1,73 @@
-import { useState, useEffect } from 'react'
-import { initToolbar } from '@21st-extension/toolbar'
-import Header from './components/Header'
-import Sidebar from './components/Sidebar'
-import TaskList from './components/TaskList'
+import { useMemo, useState } from 'react'
+import Header from './components/layout/Header/Header.jsx'
+import Sidebar from './components/layout/Sidebar/Sidebar.jsx'
+import TaskList from './components/tasks/TaskList/TaskList.jsx'
+import { DEFAULT_FILTER, FILTERS } from './constants/filters.js'
+import { useToolbar } from './hooks/useToolbar.js'
+import { useTasks } from './hooks/useTasks.js'
+import { getLocalDateString, isWithinNextSevenDays } from './utils/date.js'
 import './App.css'
 
 function App() {
-  // Initialize 21st.dev toolbar in development mode
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      const stagewiseConfig = {
-        plugins: [],
-      }
-      initToolbar(stagewiseConfig)
-    }
-  }, [])
-  // Estado: armazena a lista de tarefas
-  // Carrega do LocalStorage ou usa tarefas de exemplo
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem('todoist-tasks')
-    return savedTasks ? JSON.parse(savedTasks) : [
-      {
-        id: 1,
-        title: 'Bem-vindo ao seu Todoist Clone!',
-        completed: false,
-        priority: null,
-        dueDate: null,
-        projectId: 'inbox'
-      },
-      {
-        id: 2,
-        title: 'Experimente definir prioridade 🚩',
-        completed: false,
-        priority: 1,
-        dueDate: null,
-        projectId: 'inbox'
-      },
-      {
-        id: 3,
-        title: 'Adicione uma data de vencimento 📅',
-        completed: false,
-        priority: null,
-        dueDate: new Date().toISOString().split('T')[0],
-        projectId: 'personal'
-      },
-      {
-        id: 4,
-        title: 'Organize por projetos 📁',
-        completed: false,
-        priority: 2,
-        dueDate: null,
-        projectId: 'work'
-      },
-    ]
-  })
+  useToolbar()
 
-  // Salva no LocalStorage sempre que tasks mudar
-  useEffect(() => {
-    localStorage.setItem('todoist-tasks', JSON.stringify(tasks))
+  const [currentFilter, setCurrentFilter] = useState(DEFAULT_FILTER)
+  const {
+    tasks,
+    addTask,
+    deleteTask,
+    toggleTaskComplete,
+    updateTaskTitle,
+    updateTaskPriority,
+    updateTaskDueDate,
+    updateTaskProject,
+  } = useTasks()
+
+  const filterCounts = useMemo(() => {
+    const today = getLocalDateString()
+
+    return {
+      [FILTERS.inbox.id]: tasks.length,
+      [FILTERS.today.id]: tasks.filter((task) => task.dueDate === today).length,
+      [FILTERS.next7days.id]: tasks.filter((task) => isWithinNextSevenDays(task.dueDate)).length,
+      [FILTERS.personal.id]: tasks.filter((task) => task.projectId === FILTERS.personal.id).length,
+      [FILTERS.work.id]: tasks.filter((task) => task.projectId === FILTERS.work.id).length,
+    }
   }, [tasks])
 
-  // CREATE - Adicionar nova tarefa
-  const addTask = (taskTitle) => {
-    const newTask = {
-      id: Date.now(), // ID único baseado no timestamp
-      title: taskTitle,
-      completed: false,
-      priority: null,
-      dueDate: null,
-      projectId: 'inbox'
+  const filteredTasks = useMemo(() => {
+    const today = getLocalDateString()
+
+    switch (currentFilter) {
+      case FILTERS.today.id:
+        return tasks.filter((task) => task.dueDate === today)
+
+      case FILTERS.next7days.id:
+        return tasks.filter((task) => isWithinNextSevenDays(task.dueDate))
+
+      case FILTERS.personal.id:
+        return tasks.filter((task) => task.projectId === FILTERS.personal.id)
+
+      case FILTERS.work.id:
+        return tasks.filter((task) => task.projectId === FILTERS.work.id)
+
+      default:
+        return tasks
     }
-    setTasks([...tasks, newTask])
-  }
-
-  // DELETE - Deletar tarefa
-  const deleteTask = (taskId) => {
-    setTasks(tasks.filter(task => task.id !== taskId))
-  }
-
-  // UPDATE - Marcar/desmarcar como concluída
-  const toggleTaskComplete = (taskId) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ))
-  }
-
-  // UPDATE - Editar texto da tarefa
-  const updateTaskTitle = (taskId, newTitle) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, title: newTitle } : task
-    ))
-  }
-
-  // UPDATE - Atualizar prioridade
-  const updateTaskPriority = (taskId, priority) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, priority } : task
-    ))
-  }
-
-  // UPDATE - Atualizar data de vencimento
-  const updateTaskDueDate = (taskId, dueDate) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, dueDate } : task
-    ))
-  }
-
-  // UPDATE - Atualizar projeto
-  const updateTaskProject = (taskId, projectId) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, projectId } : task
-    ))
-  }
+  }, [currentFilter, tasks])
 
   return (
     <div className="app">
       <Header />
       <div className="main-container">
-        <Sidebar />
+        <Sidebar
+          currentFilter={currentFilter}
+          onFilterChange={setCurrentFilter}
+          filterCounts={filterCounts}
+        />
         <TaskList
-          tasks={tasks}
+          tasks={filteredTasks}
+          currentFilter={currentFilter}
           onAddTask={addTask}
           onDeleteTask={deleteTask}
           onToggleComplete={toggleTaskComplete}
