@@ -1,7 +1,7 @@
 export const FILTERS = {
   inbox: { id: 'inbox', label: 'Entrada' },
   today: { id: 'today', label: 'Hoje' },
-  next7days: { id: 'next7days', label: 'Próximos 7 dias' },
+  upcoming: { id: 'upcoming', label: 'Em Breve' },
   personal: { id: 'personal', label: 'Pessoal' },
   work: { id: 'work', label: 'Trabalho' },
 }

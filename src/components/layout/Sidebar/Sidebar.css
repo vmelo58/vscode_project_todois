@@ -1,8 +1,8 @@
 .sidebar {
   width: 280px;
-  background-color: #fafafa;
-  border-right: 1px solid #e0e0e0;
-  padding: 24px 0;
+  background-color: var(--color-surface-muted);
+  border-right: 1px solid var(--color-border);
+  padding: 0;
   overflow-y: auto;
 }
 
@@ -19,42 +19,51 @@
 }
 
 .nav-item {
+  width: 100%;
+  background: none;
+  border: none;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 8px 24px;
   cursor: pointer;
   transition: background-color 0.2s;
-  color: #202020;
+  color: var(--color-text-strong);
   position: relative;
+  text-align: left;
 }
 
 .nav-item:hover {
-  background-color: #f3f3f3;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.nav-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
 .nav-item.active {
-  background-color: #ffefe5;
+  background-color: rgba(219, 76, 63, 0.12);
   font-weight: 600;
 }
 
 .task-count-badge {
   margin-left: auto;
   font-size: 11px;
-  color: #6c6c6c;
-  background-color: #f3f3f3;
+  color: var(--color-text-muted);
+  background-color: rgba(0, 0, 0, 0.05);
   padding: 2px 8px;
   border-radius: 10px;
   font-weight: 600;
 }
 
 .nav-item.active .task-count-badge {
-  background-color: #ffd4b8;
-  color: #db4c3f;
+  background-color: rgba(219, 76, 63, 0.18);
+  color: var(--color-primary);
 }
 
 .nav-item:hover .task-count-badge {
-  background-color: #e0e0e0;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .nav-icon {
@@ -73,7 +82,7 @@
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #6c6c6c;
+  color: var(--color-text-muted);
   padding: 8px 24px;
   margin-bottom: 4px;
 }
@@ -81,6 +90,10 @@
 /* Overlay para mobile */
 .sidebar-overlay {
   display: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
   position: fixed;
   top: 0;
   left: 0;
@@ -119,7 +132,8 @@
     z-index: 999;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    background-color: var(--color-surface);
   }
 
   .sidebar-open {

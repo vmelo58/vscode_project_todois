@@ -7,6 +7,10 @@ export const useSidebar = () => {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
     const checkMobile = () => {
       const mobile = window.innerWidth < MOBILE_BREAKPOINT
       setIsMobile(mobile)
@@ -24,7 +28,7 @@ export const useSidebar = () => {
     checkMobile()
 
     // Adiciona listener para resize
-    window.addEventListener('resize', checkMobile)
+    window.addEventListener('resize', checkMobile, { passive: true })
 
     // Cleanup
     return () => window.removeEventListener('resize', checkMobile)
