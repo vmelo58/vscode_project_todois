@@ -28,7 +28,12 @@ function App() {
     updateTaskProject,
     updateTaskDescription,
     updateTaskLabels,
-    reorderTasks,
+    addTaskComment,
+    duplicateTask,
+    addSubtask,
+    indentTask,
+    outdentTask,
+    moveTask,
   } = useTasks()
 
   // Optimize: Calculate date once outside reduce loop
@@ -144,7 +149,12 @@ function App() {
               onUpdateProject={updateTaskProject}
               onUpdateDescription={updateTaskDescription}
               onUpdateLabels={updateTaskLabels}
-              onReorderTasks={reorderTasks}
+              onAddComment={addTaskComment}
+              onDuplicateTask={duplicateTask}
+              onAddSubtask={addSubtask}
+              onIndentTask={indentTask}
+              onOutdentTask={outdentTask}
+              onMoveTask={moveTask}
             />
           )}
         </Suspense>

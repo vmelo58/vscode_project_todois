@@ -20,12 +20,96 @@ const generateId = () => {
   return result
 }
 
+const createComment = (text) => ({
+  id: generateId(),
+  text,
+  createdAt: new Date().toISOString(),
+})
+
+const normalizeComment = (comment) => ({
+  id: comment?.id ? String(comment.id) : generateId(),
+  text: comment?.text ?? '',
+  createdAt: comment?.createdAt ?? new Date().toISOString(),
+})
+
 const normalizeTask = (task) => ({
   ...task,
   id: String(task.id),
   description: task.description || '',
   labels: task.labels || [],
+  comments: Array.isArray(task.comments) ? task.comments.map(normalizeComment) : [],
+  parentId: task.parentId ? String(task.parentId) : null,
 })
+
+const buildChildrenMap = (tasks) => {
+  const map = new Map()
+  tasks.forEach((task) => {
+    const parentKey = task.parentId ? String(task.parentId) : null
+    if (!map.has(parentKey)) {
+      map.set(parentKey, [])
+    }
+    map.get(parentKey).push(task)
+  })
+  return map
+}
+
+const collectDescendantIds = (childrenMap, taskId) => {
+  const result = []
+  const children = childrenMap.get(taskId) || []
+
+  children.forEach((child) => {
+    result.push(child.id)
+    result.push(...collectDescendantIds(childrenMap, child.id))
+  })
+
+  return result
+}
+
+const moveBranch = (tasks, branchRootId, referenceId, position = 'after', updateRoot) => {
+  if (!branchRootId || branchRootId === referenceId) {
+    return tasks
+  }
+
+  const childrenMap = buildChildrenMap(tasks)
+  const branchIds = new Set([branchRootId, ...collectDescendantIds(childrenMap, branchRootId)])
+
+  if (branchIds.size === 0) {
+    return tasks
+  }
+
+  if (referenceId && branchIds.has(referenceId)) {
+    return tasks
+  }
+
+  const branch = tasks.filter((task) => branchIds.has(task.id))
+  if (branch.length === 0) {
+    return tasks
+  }
+
+  const remainder = tasks.filter((task) => !branchIds.has(task.id))
+
+  let insertIndex = remainder.length
+
+  if (referenceId) {
+    insertIndex = remainder.findIndex((task) => task.id === referenceId)
+
+    if (insertIndex === -1) {
+      return tasks
+    }
+
+    if (position === 'after') {
+      insertIndex += 1
+    }
+  }
+
+  const updatedBranch = typeof updateRoot === 'function'
+    ? branch.map((task) => (task.id === branchRootId ? updateRoot(task) : task))
+    : branch
+
+  remainder.splice(insertIndex, 0, ...updatedBranch)
+
+  return remainder
+}
 
 const buildSeedTasks = () => ([
   {
@@ -36,7 +120,11 @@ const buildSeedTasks = () => ([
     priority: null,
     dueDate: null,
     projectId: DEFAULT_PROJECT_ID,
-    labels: [],
+    labels: ['boas-vindas'],
+    comments: [
+      createComment('Você pode arrastar tarefas para reordenar.'),
+    ],
+    parentId: null,
   },
   {
     id: 'seed-2',
@@ -47,6 +135,8 @@ const buildSeedTasks = () => ([
     dueDate: null,
     projectId: DEFAULT_PROJECT_ID,
     labels: ['importante'],
+    comments: [],
+    parentId: 'seed-1',
   },
   {
     id: 'seed-3',
@@ -56,7 +146,9 @@ const buildSeedTasks = () => ([
     priority: null,
     dueDate: getLocalDateString(),
     projectId: PROJECTS.personal.id,
-    labels: [],
+    labels: ['pessoal'],
+    comments: [],
+    parentId: null,
   },
   {
     id: 'seed-4',
@@ -67,6 +159,8 @@ const buildSeedTasks = () => ([
     dueDate: null,
     projectId: PROJECTS.work.id,
     labels: ['trabalho'],
+    comments: [],
+    parentId: null,
   },
 ]).map(normalizeTask)
 
@@ -172,7 +266,7 @@ export const useTasks = () => {
     const trimmedTitle = title.trim()
 
     if (!trimmedTitle) {
-      return
+      return null
     }
 
     const {
@@ -180,13 +274,15 @@ export const useTasks = () => {
       projectId = DEFAULT_PROJECT_ID,
       priority = null,
       description = '',
-      labels = []
+      labels = [],
+      comments = [],
+      parentId = null,
+      insertAfterId = null,
     } = options
     const id = generateId()
 
-    setTasks((prev) => [
-      ...prev,
-      {
+    setTasks((prev) => {
+      const newTask = normalizeTask({
         id,
         title: trimmedTitle,
         description,
@@ -195,12 +291,35 @@ export const useTasks = () => {
         dueDate,
         projectId,
         labels,
-      },
-    ])
+        comments,
+        parentId,
+      })
+
+      if (!insertAfterId) {
+        return [...prev, newTask]
+      }
+
+      const clone = [...prev]
+      const insertIndex = clone.findIndex((task) => task.id === insertAfterId)
+
+      if (insertIndex === -1) {
+        clone.push(newTask)
+        return clone
+      }
+
+      clone.splice(insertIndex + 1, 0, newTask)
+      return clone
+    })
+
+    return id
   }, [])
 
   const deleteTask = useCallback((taskId) => {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId))
+    setTasks((prev) => {
+      const childrenMap = buildChildrenMap(prev)
+      const idsToRemove = new Set([taskId, ...collectDescendantIds(childrenMap, taskId)])
+      return prev.filter((task) => !idsToRemove.has(task.id))
+    })
   }, [])
 
   const patchTask = useCallback((taskId, updater) => {
@@ -217,8 +336,21 @@ export const useTasks = () => {
   }, [])
 
   const toggleTaskComplete = useCallback((taskId) => {
-    patchTask(taskId, (task) => ({ completed: !task.completed }))
-  }, [patchTask])
+    setTasks((prev) => {
+      const target = prev.find((task) => task.id === taskId)
+      if (!target) {
+        return prev
+      }
+
+      const shouldComplete = !target.completed
+      const childrenMap = buildChildrenMap(prev)
+      const idsToUpdate = new Set([taskId, ...collectDescendantIds(childrenMap, taskId)])
+
+      return prev.map((task) => (
+        idsToUpdate.has(task.id) ? { ...task, completed: shouldComplete } : task
+      ))
+    })
+  }, [])
 
   const updateTaskTitle = useCallback((taskId, newTitle) => {
     patchTask(taskId, { title: newTitle })
@@ -244,11 +376,158 @@ export const useTasks = () => {
     patchTask(taskId, { labels })
   }, [patchTask])
 
-  const reorderTasks = useCallback((taskIds) => {
+  const addTaskComment = useCallback((taskId, text) => {
+    const trimmed = text.trim()
+    if (!trimmed) {
+      return
+    }
+
+    const comment = normalizeComment({ text: trimmed })
+
+    patchTask(taskId, (task) => ({
+      comments: [...(task.comments ?? []), comment],
+    }))
+  }, [patchTask])
+
+  const duplicateTask = useCallback((taskId) => {
     setTasks((prev) => {
-      const taskMap = new Map(prev.map(task => [task.id, task]))
-      return taskIds.map(id => taskMap.get(id)).filter(Boolean)
+      const index = prev.findIndex((task) => task.id === taskId)
+      if (index === -1) {
+        return prev
+      }
+
+      const original = prev[index]
+      const copy = normalizeTask({
+        ...original,
+        id: generateId(),
+        title: `${original.title} (cópia)`,
+        completed: false,
+      })
+
+      const next = [...prev]
+      next.splice(index + 1, 0, copy)
+      return next
     })
+  }, [])
+
+  const addSubtask = useCallback((parentId, options = {}) => {
+    const newId = generateId()
+
+    setTasks((prev) => {
+      const parentTask = prev.find((task) => task.id === parentId)
+      if (!parentTask) {
+        return prev
+      }
+
+      const {
+        title = '',
+        description = '',
+        dueDate = parentTask.dueDate ?? null,
+        priority = null,
+        labels = [],
+      } = options
+
+      const newTask = normalizeTask({
+        id: newId,
+        title,
+        description,
+        completed: false,
+        priority,
+        dueDate,
+        projectId: parentTask.projectId,
+        labels,
+        comments: [],
+        parentId,
+      })
+
+      const childrenMap = buildChildrenMap(prev)
+      const descendants = collectDescendantIds(childrenMap, parentId)
+      const insertAfterId = descendants.length > 0 ? descendants[descendants.length - 1] : parentId
+
+      const next = [...prev]
+      const insertIndex = next.findIndex((task) => task.id === insertAfterId)
+
+      if (insertIndex === -1) {
+        next.push(newTask)
+      } else {
+        next.splice(insertIndex + 1, 0, newTask)
+      }
+
+      return next
+    })
+
+    return newId
+  }, [])
+
+  const indentTask = useCallback((taskId, newParentId) => {
+    if (!newParentId) {
+      return
+    }
+
+    setTasks((prev) => {
+      const taskExists = prev.some((task) => task.id === taskId)
+      const parentExists = prev.some((task) => task.id === newParentId)
+
+      if (!taskExists || !parentExists) {
+        return prev
+      }
+
+      const childrenMap = buildChildrenMap(prev)
+      const descendantIds = new Set(collectDescendantIds(childrenMap, taskId))
+
+      if (descendantIds.has(newParentId)) {
+        return prev
+      }
+
+      const parentDescendants = collectDescendantIds(childrenMap, newParentId)
+      const referenceId = parentDescendants.length > 0
+        ? parentDescendants[parentDescendants.length - 1]
+        : newParentId
+
+      return moveBranch(
+        prev,
+        taskId,
+        referenceId,
+        'after',
+        (rootTask) => ({ ...rootTask, parentId: newParentId })
+      )
+    })
+  }, [])
+
+  const outdentTask = useCallback((taskId) => {
+    setTasks((prev) => {
+      const task = prev.find((entry) => entry.id === taskId)
+      if (!task || !task.parentId) {
+        return prev
+      }
+
+      const parentTask = prev.find((entry) => entry.id === task.parentId)
+      if (!parentTask) {
+        return prev
+      }
+
+      const newParentId = parentTask.parentId ? String(parentTask.parentId) : null
+      const childrenMap = buildChildrenMap(prev)
+      const branchIds = new Set([taskId, ...collectDescendantIds(childrenMap, taskId)])
+      const parentDescendants = collectDescendantIds(childrenMap, parentTask.id)
+      const referenceId = [...parentDescendants]
+        .reverse()
+        .find((id) => !branchIds.has(id)) || parentTask.id
+
+      return moveBranch(
+        prev,
+        taskId,
+        referenceId,
+        'after',
+        (rootTask) => ({ ...rootTask, parentId: newParentId })
+      )
+    })
+  }, [])
+
+  const moveTask = useCallback((taskId, targetId, options = {}) => {
+    const { position = 'after' } = options
+
+    setTasks((prev) => moveBranch(prev, taskId, targetId, position))
   }, [])
 
   return {
@@ -262,6 +541,11 @@ export const useTasks = () => {
     updateTaskProject,
     updateTaskDescription,
     updateTaskLabels,
-    reorderTasks,
+    addTaskComment,
+    duplicateTask,
+    addSubtask,
+    indentTask,
+    outdentTask,
+    moveTask,
   }
 }

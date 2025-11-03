@@ -21,6 +21,7 @@
   --color-chip-muted-bg: rgba(15, 23, 42, 0.08);
   --color-danger-soft: rgba(219, 76, 63, 0.18);
   --color-info-strong: #4a90e2;
+  --color-hover: rgba(15, 23, 42, 0.04);
   --color-shadow-hover: 0 14px 24px rgba(15, 23, 42, 0.12);
 
   /* Typography */
@@ -66,6 +67,7 @@
     --color-chip-muted-bg: rgba(255, 255, 255, 0.12);
     --color-danger-soft: rgba(255, 114, 94, 0.22);
     --color-info-strong: #82b4ff;
+    --color-hover: rgba(255, 255, 255, 0.08);
     --color-shadow-hover: 0 18px 32px rgba(0, 0, 0, 0.55);
     color-scheme: dark;
   }

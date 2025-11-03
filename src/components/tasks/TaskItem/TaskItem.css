@@ -9,6 +9,7 @@
   transition: background-color var(--transition-fast);
   position: relative;
   min-height: 48px;
+  margin-left: calc(var(--task-depth, 0) * 20px);
 }
 
 .task-item-flat:hover {
@@ -153,6 +154,7 @@
   opacity: 0;
   transition: opacity var(--transition-fast);
   flex-shrink: 0;
+  position: relative;
 }
 
 .task-item-flat:hover .task-quick-actions {
@@ -170,6 +172,7 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-muted);
+  position: relative;
 }
 
 .quick-action-btn:hover {
@@ -183,6 +186,122 @@
 .quick-action-icon {
   font-size: 16px;
   line-height: 1;
+}
+
+.quick-action-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border-radius: var(--radius-full);
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.quick-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-elevation-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--color-elevation-shadow);
+  min-width: 160px;
+  z-index: 20;
+  padding: 4px;
+  gap: 2px;
+}
+
+.quick-menu--wide {
+  min-width: 260px;
+  max-width: 320px;
+  gap: 8px;
+}
+
+.quick-menu-item {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-text-strong);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quick-menu-item:hover,
+.quick-menu-item:focus-visible {
+  background-color: var(--color-hover);
+}
+
+.quick-menu-danger {
+  color: var(--color-primary);
+}
+
+.quick-menu-priority-icon {
+  margin-left: auto;
+}
+
+.quick-menu-comments {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.quick-menu-comment {
+  background-color: var(--color-chip-bg);
+  border-radius: var(--radius-md);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quick-menu-comment span {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.quick-menu-placeholder {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 6px 0;
+}
+
+.quick-menu-textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.quick-menu-primary {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  align-self: flex-end;
+}
+
+.quick-menu-primary:hover {
+  background-color: var(--color-primary-strong);
 }
 
 /* Label do checkbox - esconde o label nativo */

@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -17,6 +17,7 @@ import { DEFAULT_PROJECT_ID, PROJECTS } from '../../../constants/projects.js'
 import { PRIORITY_OPTIONS } from '../../../constants/priorities.js'
 import SortableTaskItem from '../TaskItem/SortableTaskItem.jsx'
 import ListToolbar from '../ListToolbar/ListToolbar.jsx'
+import { getLocalDateString } from '../../../utils/date.js'
 import './TaskList.css'
 
 function TaskList({
@@ -31,7 +32,12 @@ function TaskList({
   onUpdateProject,
   onUpdateDescription,
   onUpdateLabels,
-  onReorderTasks,
+  onAddComment,
+  onDuplicateTask,
+  onAddSubtask,
+  onIndentTask,
+  onOutdentTask,
+  onMoveTask,
 }) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [editingTaskId, setEditingTaskId] = useState(null)
@@ -43,12 +49,15 @@ function TaskList({
   const [editingLabels, setEditingLabels] = useState([])
   const [newLabelInput, setNewLabelInput] = useState('')
 
+  // Add task state
+  const [isAddingTask, setIsAddingTask] = useState(false)
+
   // Toolbar state
   const [showFilter, setShowFilter] = useState('all') // 'all', 'active', 'completed'
   const [sortBy, setSortBy] = useState('manual') // 'manual', 'date', 'priority', 'name'
 
   // Filter tasks based on showFilter
-  const filteredTasks = useMemo(() => {
+  const statusFilteredTasks = useMemo(() => {
     if (showFilter === 'active') {
       return tasks.filter(task => !task.completed)
     } else if (showFilter === 'completed') {
@@ -59,11 +68,11 @@ function TaskList({
 
   // Sort tasks based on sortBy
   const sortedTasks = useMemo(() => {
-    const tasksToSort = [...filteredTasks]
-
     if (sortBy === 'manual') {
-      return tasksToSort // Keep original order
+      return statusFilteredTasks
     }
+
+    const tasksToSort = [...statusFilteredTasks]
 
     return tasksToSort.sort((a, b) => {
       if (sortBy === 'date') {
@@ -83,7 +92,7 @@ function TaskList({
       }
       return 0
     })
-  }, [filteredTasks, sortBy])
+  }, [statusFilteredTasks, sortBy])
 
   // Count tasks by status
   const activeCount = useMemo(() =>
@@ -92,6 +101,84 @@ function TaskList({
   const completedCount = useMemo(() =>
     tasks.filter(task => task.completed).length, [tasks]
   )
+
+  const childrenMap = useMemo(() => {
+    const map = new Map()
+
+    tasks.forEach((task) => {
+      const parentKey = task.parentId ? String(task.parentId) : null
+      if (!map.has(parentKey)) {
+        map.set(parentKey, [])
+      }
+      map.get(parentKey).push(task.id)
+    })
+
+    return map
+  }, [tasks])
+
+  const manualRows = useMemo(() => {
+    if (sortBy !== 'manual') {
+      return null
+    }
+
+    const nodesById = new Map()
+    statusFilteredTasks.forEach((task) => {
+      nodesById.set(task.id, { task, children: [] })
+    })
+
+    const roots = []
+
+    statusFilteredTasks.forEach((task) => {
+      const node = nodesById.get(task.id)
+      const parentId = task.parentId ? String(task.parentId) : null
+
+      if (parentId && nodesById.has(parentId)) {
+        nodesById.get(parentId).children.push(node)
+      } else {
+        roots.push(node)
+      }
+    })
+
+    const rows = []
+
+    const traverse = (node, depth) => {
+      rows.push({
+        task: node.task,
+        depth,
+        hasChildren: node.children.length > 0,
+      })
+
+      node.children.forEach((child) => traverse(child, depth + 1))
+    }
+
+    roots.forEach((root) => traverse(root, 0))
+    return rows
+  }, [sortBy, statusFilteredTasks])
+
+  const visibleRows = useMemo(() => {
+    if (sortBy === 'manual') {
+      const rows = manualRows || []
+
+      return rows.map((row, index) => {
+        const previousRow = index > 0 ? rows[index - 1] : null
+        const canIndent = Boolean(previousRow && previousRow.depth >= row.depth)
+
+        return {
+          ...row,
+          canIndent,
+          canOutdent: row.depth > 0,
+        }
+      })
+    }
+
+    return sortedTasks.map((task) => ({
+      task,
+      depth: 0,
+      hasChildren: (childrenMap.get(task.id) || []).length > 0,
+      canIndent: false,
+      canOutdent: false,
+    }))
+  }, [sortBy, manualRows, sortedTasks, childrenMap])
 
   // Configure drag sensors
   const sensors = useSensors(
@@ -105,28 +192,31 @@ function TaskList({
     })
   )
 
-  // Task IDs para o DndContext (use sortedTasks instead of tasks)
-  const taskIds = useMemo(() => sortedTasks.map(task => task.id), [sortedTasks])
+  // Task IDs para o DndContext (baseados na lista visível)
+  const taskIds = useMemo(() => visibleRows.map((row) => row.task.id), [visibleRows])
 
   // Handler para quando o drag termina
-  const handleDragEnd = (event) => {
+  const handleDragEnd = useCallback((event) => {
+    if (sortBy !== 'manual' || !manualRows || !onMoveTask) {
+      return
+    }
+
     const { active, over } = event
 
-    if (over && active.id !== over.id) {
-      const oldIndex = sortedTasks.findIndex(task => task.id === active.id)
-      const newIndex = sortedTasks.findIndex(task => task.id === over.id)
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newTaskIds = [...taskIds]
-        const [movedId] = newTaskIds.splice(oldIndex, 1)
-        newTaskIds.splice(newIndex, 0, movedId)
-
-        if (onReorderTasks) {
-          onReorderTasks(newTaskIds)
-        }
-      }
+    if (!over || active.id === over.id) {
+      return
     }
-  }
+
+    const activeIndex = manualRows.findIndex((row) => row.task.id === active.id)
+    const overIndex = manualRows.findIndex((row) => row.task.id === over.id)
+
+    if (activeIndex === -1 || overIndex === -1) {
+      return
+    }
+
+    const position = activeIndex < overIndex ? 'after' : 'before'
+    onMoveTask(active.id, over.id, { position })
+  }, [manualRows, onMoveTask, sortBy])
 
   // Label amigável do filtro atual
   const filterName = useMemo(() => {
@@ -135,8 +225,8 @@ function TaskList({
   }, [currentFilter])
 
   const tasksCountLabel = useMemo(() => (
-    `${sortedTasks.length} ${sortedTasks.length === 1 ? 'tarefa' : 'tarefas'}`
-  ), [sortedTasks.length])
+    `${visibleRows.length} ${visibleRows.length === 1 ? 'tarefa' : 'tarefas'}`
+  ), [visibleRows.length])
 
   // Função chamada quando o usuário digita no input
   const handleInputChange = (e) => {
@@ -152,6 +242,25 @@ function TaskList({
     if (sanitizedTitle) {
       onAddTask(sanitizedTitle)
       setNewTaskTitle('')
+      setIsAddingTask(false) // Fecha o input após adicionar
+    }
+  }
+
+  // Abre o input de adicionar tarefa
+  const openAddTask = () => {
+    setIsAddingTask(true)
+  }
+
+  // Cancela a adição de tarefa
+  const cancelAddTask = () => {
+    setIsAddingTask(false)
+    setNewTaskTitle('')
+  }
+
+  // Handler para tecla Escape no input de nova tarefa
+  const handleAddTaskKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      cancelAddTask()
     }
   }
 
@@ -239,6 +348,112 @@ function TaskList({
     }
   }
 
+  const handleQuickSchedule = useCallback((task, option) => {
+    let dueDate = task.dueDate
+    const base = new Date()
+
+    switch (option) {
+      case 'today':
+        dueDate = getLocalDateString(base)
+        break
+      case 'tomorrow':
+        base.setDate(base.getDate() + 1)
+        dueDate = getLocalDateString(base)
+        break
+      case 'nextWeek':
+        base.setDate(base.getDate() + 7)
+        dueDate = getLocalDateString(base)
+        break
+      case 'noDate':
+        dueDate = null
+        break
+      default:
+        dueDate = option
+        break
+    }
+
+    onUpdateDueDate(task.id, dueDate)
+  }, [onUpdateDueDate])
+
+  const handleQuickPriorityChange = useCallback((task, priority) => {
+    onUpdatePriority(task.id, priority)
+  }, [onUpdatePriority])
+
+  const handleQuickComment = useCallback((task, text) => {
+    if (onAddComment) {
+      onAddComment(task.id, text)
+    }
+  }, [onAddComment])
+
+  const handleQuickDuplicate = useCallback((task) => {
+    if (onDuplicateTask) {
+      onDuplicateTask(task.id)
+    }
+  }, [onDuplicateTask])
+
+  const handleCreateSubtask = useCallback((taskId) => {
+    if (!onAddSubtask) {
+      return
+    }
+
+    const parentTask = tasks.find((task) => task.id === taskId) || null
+    const fallbackTitle = 'Nova tarefa'
+
+    const newTaskId = onAddSubtask(taskId, {
+      title: fallbackTitle,
+      description: '',
+      priority: parentTask?.priority ?? null,
+      dueDate: parentTask?.dueDate ?? null,
+      labels: parentTask?.labels ?? [],
+    })
+
+    if (!newTaskId) {
+      return
+    }
+
+    setEditingTaskId(newTaskId)
+    setEditingText(fallbackTitle)
+    setEditingDescription('')
+    setEditingPriority(parentTask?.priority ? String(parentTask.priority) : '')
+    setEditingDueDate(parentTask?.dueDate ?? '')
+    setEditingProject(parentTask?.projectId ?? DEFAULT_PROJECT_ID)
+    setEditingLabels(parentTask?.labels ?? [])
+    setNewLabelInput('')
+  }, [onAddSubtask, tasks])
+
+  const handleIndentTask = useCallback((taskId) => {
+    if (sortBy !== 'manual' || !manualRows || !onIndentTask) {
+      return
+    }
+
+    const currentIndex = manualRows.findIndex((row) => row.task.id === taskId)
+    if (currentIndex <= 0) {
+      return
+    }
+
+    const currentRow = manualRows[currentIndex]
+    const previousRow = manualRows[currentIndex - 1]
+
+    if (!previousRow || previousRow.depth < currentRow.depth) {
+      return
+    }
+
+    onIndentTask(taskId, previousRow.task.id)
+  }, [manualRows, onIndentTask, sortBy])
+
+  const handleOutdentTask = useCallback((taskId) => {
+    if (sortBy !== 'manual' || !manualRows || !onOutdentTask) {
+      return
+    }
+
+    const currentRow = manualRows.find((row) => row.task.id === taskId)
+    if (!currentRow || currentRow.depth === 0) {
+      return
+    }
+
+    onOutdentTask(taskId)
+  }, [manualRows, onOutdentTask, sortBy])
+
   return (
     <main className="task-list-container">
       <div className="task-list-header">
@@ -246,22 +461,43 @@ function TaskList({
         <p className="task-count">{tasksCountLabel}</p>
       </div>
 
-      {/* Formulário para adicionar nova tarefa */}
-      <form className="add-task-form" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          className="task-input"
-          placeholder="+ Adicionar tarefa"
-          value={newTaskTitle}
-          onChange={handleInputChange}
-          aria-label="Descrição da nova tarefa"
-          autoComplete="off"
-        />
-        <button type="submit" className="add-task-button">
-          <span aria-hidden="true">＋</span>
-          <span>Adicionar tarefa</span>
+      {/* Minimal Add Task */}
+      {!isAddingTask ? (
+        <button
+          className="add-task-trigger"
+          onClick={openAddTask}
+          aria-label="Adicionar tarefa"
+        >
+          <span className="add-task-icon" aria-hidden="true">＋</span>
+          <span className="add-task-text">Adicionar tarefa</span>
         </button>
-      </form>
+      ) : (
+        <form className="add-task-form-inline" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            className="add-task-input-inline"
+            placeholder="Nome da tarefa"
+            value={newTaskTitle}
+            onChange={handleInputChange}
+            onKeyDown={handleAddTaskKeyDown}
+            aria-label="Nome da nova tarefa"
+            autoComplete="off"
+            autoFocus
+          />
+          <div className="add-task-actions-inline">
+            <button type="submit" className="add-task-submit-inline">
+              Adicionar
+            </button>
+            <button
+              type="button"
+              className="add-task-cancel-inline"
+              onClick={cancelAddTask}
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* List Toolbar */}
       {tasks.length > 0 && (
@@ -282,7 +518,7 @@ function TaskList({
           <span className="task-empty-icon" aria-hidden="true">🗒️</span>
           <p>Nenhuma tarefa por aqui. Que tal adicionar a próxima?</p>
         </div>
-      ) : sortedTasks.length === 0 ? (
+      ) : visibleRows.length === 0 ? (
         <div className="task-empty-state" role="status" aria-live="polite">
           <span className="task-empty-icon" aria-hidden="true">🔍</span>
           <p>Nenhuma tarefa encontrada com este filtro.</p>
@@ -295,19 +531,23 @@ function TaskList({
         >
           <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
             <div className="tasks-flat-list">
-              {sortedTasks.map((task) => (
+              {visibleRows.map(({ task, depth, hasChildren, canIndent, canOutdent }) => (
                 editingTaskId === task.id ? (
-                  <div key={task.id} className="task-edit-expanded-wrapper">
+                  <div
+                    key={task.id}
+                    className="task-edit-expanded-wrapper"
+                    style={depth > 0 ? { '--task-depth': depth } : undefined}
+                  >
                     <div className="task-edit-expanded">
-                      {/* Título */}
-                      <input
-                        type="text"
-                        className="task-edit-input task-edit-title"
-                        placeholder="Nome da tarefa"
-                        value={editingText}
-                        onChange={(e) => setEditingText(e.target.value)}
-                        autoFocus
-                      />
+                        {/* Título */}
+                        <input
+                          type="text"
+                          className="task-edit-input task-edit-title"
+                          placeholder="Nome da tarefa"
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          autoFocus
+                        />
 
                       {/* Descrição */}
                       <textarea
@@ -408,9 +648,21 @@ function TaskList({
                   <SortableTaskItem
                     key={task.id}
                     task={task}
+                    depth={depth}
+                    hasChildren={hasChildren}
+                    canIndent={canIndent}
+                    canOutdent={canOutdent}
+                    isDragEnabled={sortBy === 'manual'}
                     onToggleComplete={onToggleComplete}
                     onEdit={startEditing}
                     onDelete={onDeleteTask}
+                    onSchedule={handleQuickSchedule}
+                    onPriorityChange={handleQuickPriorityChange}
+                    onAddComment={handleQuickComment}
+                    onDuplicate={handleQuickDuplicate}
+                    onAddSubtask={handleCreateSubtask}
+                    onIndent={handleIndentTask}
+                    onOutdent={handleOutdentTask}
                   />
                 )
               ))}
