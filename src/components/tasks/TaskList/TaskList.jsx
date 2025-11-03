@@ -1,8 +1,21 @@
 import { memo, useMemo, useState } from 'react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 import { DEFAULT_FILTER, FILTERS } from '../../../constants/filters.js'
 import { DEFAULT_PROJECT_ID, PROJECTS } from '../../../constants/projects.js'
 import { PRIORITY_OPTIONS } from '../../../constants/priorities.js'
-import TaskItem from '../TaskItem/TaskItem.jsx'
+import SortableTaskItem from '../TaskItem/SortableTaskItem.jsx'
 import './TaskList.css'
 
 function TaskList({
@@ -15,6 +28,7 @@ function TaskList({
   onUpdatePriority,
   onUpdateDueDate,
   onUpdateProject,
+  onReorderTasks,
 }) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [editingTaskId, setEditingTaskId] = useState(null)
@@ -22,6 +36,41 @@ function TaskList({
   const [editingPriority, setEditingPriority] = useState('')
   const [editingDueDate, setEditingDueDate] = useState('')
   const [editingProject, setEditingProject] = useState(DEFAULT_PROJECT_ID)
+
+  // Configure drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px de movimento antes de começar o drag
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Task IDs para o DndContext
+  const taskIds = useMemo(() => tasks.map(task => task.id), [tasks])
+
+  // Handler para quando o drag termina
+  const handleDragEnd = (event) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = tasks.findIndex(task => task.id === active.id)
+      const newIndex = tasks.findIndex(task => task.id === over.id)
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newTaskIds = [...taskIds]
+        const [movedId] = newTaskIds.splice(oldIndex, 1)
+        newTaskIds.splice(newIndex, 0, movedId)
+
+        if (onReorderTasks) {
+          onReorderTasks(newTaskIds)
+        }
+      }
+    }
+  }
 
   // Label amigável do filtro atual
   const filterName = useMemo(() => {
@@ -130,86 +179,94 @@ function TaskList({
           <p>Nenhuma tarefa por aqui. Que tal adicionar a próxima?</p>
         </div>
       ) : (
-        <div className="tasks-flat-list">
-          {tasks.map((task) => (
-            editingTaskId === task.id ? (
-              <div key={task.id} className="task-edit-expanded-wrapper">
-                <div className="task-edit-expanded">
-                  <input
-                    type="text"
-                    className="task-edit-input"
-                    value={editingText}
-                    onChange={(e) => setEditingText(e.target.value)}
-                    onKeyDown={(e) => handleEditKeyPress(e, task.id)}
-                    autoFocus
-                  />
-
-                  <div className="task-metadata-edit">
-                    {/* Prioridade */}
-                    <div className="metadata-field">
-                      <label>🚩 Prioridade:</label>
-                      <select
-                        value={editingPriority}
-                        onChange={(e) => setEditingPriority(e.target.value)}
-                        className="metadata-select"
-                      >
-                        {PRIORITY_OPTIONS.map((option) => (
-                          <option key={option.value || 'none'} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Data */}
-                    <div className="metadata-field">
-                      <label>📅 Data:</label>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+            <div className="tasks-flat-list">
+              {tasks.map((task) => (
+                editingTaskId === task.id ? (
+                  <div key={task.id} className="task-edit-expanded-wrapper">
+                    <div className="task-edit-expanded">
                       <input
-                        type="date"
-                        value={editingDueDate}
-                        onChange={(e) => setEditingDueDate(e.target.value)}
-                        className="metadata-input"
+                        type="text"
+                        className="task-edit-input"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => handleEditKeyPress(e, task.id)}
+                        autoFocus
                       />
-                    </div>
 
-                    {/* Projeto */}
-                    <div className="metadata-field">
-                      <label>📁 Projeto:</label>
-                      <select
-                        value={editingProject}
-                        onChange={(e) => setEditingProject(e.target.value)}
-                        className="metadata-select"
-                      >
-                        {Object.values(PROJECTS).map((project) => (
-                          <option key={project.id} value={project.id}>
-                            {project.icon} {project.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="task-metadata-edit">
+                        {/* Prioridade */}
+                        <div className="metadata-field">
+                          <label>🚩 Prioridade:</label>
+                          <select
+                            value={editingPriority}
+                            onChange={(e) => setEditingPriority(e.target.value)}
+                            className="metadata-select"
+                          >
+                            {PRIORITY_OPTIONS.map((option) => (
+                              <option key={option.value || 'none'} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Data */}
+                        <div className="metadata-field">
+                          <label>📅 Data:</label>
+                          <input
+                            type="date"
+                            value={editingDueDate}
+                            onChange={(e) => setEditingDueDate(e.target.value)}
+                            className="metadata-input"
+                          />
+                        </div>
+
+                        {/* Projeto */}
+                        <div className="metadata-field">
+                          <label>📁 Projeto:</label>
+                          <select
+                            value={editingProject}
+                            onChange={(e) => setEditingProject(e.target.value)}
+                            className="metadata-select"
+                          >
+                            {Object.values(PROJECTS).map((project) => (
+                              <option key={project.id} value={project.id}>
+                                {project.icon} {project.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="edit-actions">
+                        <button type="button" className="save-button" onClick={() => saveEdit(task.id)}>
+                          Salvar
+                        </button>
+                        <button type="button" className="cancel-button" onClick={cancelEdit}>
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="edit-actions">
-                    <button type="button" className="save-button" onClick={() => saveEdit(task.id)}>
-                      Salvar
-                    </button>
-                    <button type="button" className="cancel-button" onClick={cancelEdit}>
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggleComplete={onToggleComplete}
-                onEdit={startEditing}
-                onDelete={onDeleteTask}
-              />
-            )
-          ))}
-        </div>
+                ) : (
+                  <SortableTaskItem
+                    key={task.id}
+                    task={task}
+                    onToggleComplete={onToggleComplete}
+                    onEdit={startEditing}
+                    onDelete={onDeleteTask}
+                  />
+                )
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </main>
   )

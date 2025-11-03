@@ -15,6 +15,13 @@
   background-color: var(--color-hover);
 }
 
+.task-item-flat.task-item-dragging {
+  background-color: var(--color-surface);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
 /* Remove border from last item */
 .task-item-flat:last-child {
   border-bottom: none;
@@ -212,5 +219,54 @@
 @media (hover: none) {
   .task-quick-actions {
     opacity: 1;
+  }
+}
+
+/* Drag Handle - Todoist Style */
+.drag-handle {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: grab;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-left: -4px;
+}
+
+.drag-handle:hover {
+  color: var(--color-text-strong);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.task-item-flat:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle-icon {
+  display: block;
+  line-height: 1;
+  font-weight: bold;
+  letter-spacing: -2px;
+}
+
+/* Mobile - drag handle sempre visível */
+@media (max-width: 640px) {
+  .drag-handle {
+    opacity: 1;
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
   }
 }

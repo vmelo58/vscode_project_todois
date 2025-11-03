@@ -2,8 +2,8 @@ import { memo } from 'react'
 import TaskMetadata from '../shared/TaskMetadata.jsx'
 import './TaskItem.css'
 
-function TaskItem({ task, onToggleComplete, onEdit, onDelete, onSchedule, onPriorityChange }) {
-  const itemClassName = `task-item-flat ${task.completed ? 'task-item-completed' : ''}`
+function TaskItem({ task, onToggleComplete, onEdit, onDelete, onSchedule, onPriorityChange, dragHandleProps, isDragging }) {
+  const itemClassName = `task-item-flat ${task.completed ? 'task-item-completed' : ''} ${isDragging ? 'task-item-dragging' : ''}`
   const checkboxClassName = `task-checkbox ${task.priority ? `priority-${task.priority}` : ''}`
 
   const handleScheduleClick = (e) => {
@@ -32,6 +32,18 @@ function TaskItem({ task, onToggleComplete, onEdit, onDelete, onSchedule, onPrio
 
   return (
     <div className={itemClassName}>
+      {/* Drag Handle - só aparece quando dragHandleProps está definido */}
+      {dragHandleProps && (
+        <button
+          type="button"
+          className="drag-handle"
+          aria-label="Arrastar para reordenar"
+          {...dragHandleProps}
+        >
+          <span className="drag-handle-icon">⋮⋮</span>
+        </button>
+      )}
+
       {/* Checkbox com borda colorida baseada na prioridade */}
       <div className={checkboxClassName}>
         <input

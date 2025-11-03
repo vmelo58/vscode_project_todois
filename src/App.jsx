@@ -26,6 +26,7 @@ function App() {
     updateTaskPriority,
     updateTaskDueDate,
     updateTaskProject,
+    reorderTasks,
   } = useTasks()
 
   // Optimize: Calculate date once outside reduce loop
@@ -139,6 +140,7 @@ function App() {
               onUpdatePriority={updateTaskPriority}
               onUpdateDueDate={updateTaskDueDate}
               onUpdateProject={updateTaskProject}
+              onReorderTasks={reorderTasks}
             />
           )}
         </Suspense>
