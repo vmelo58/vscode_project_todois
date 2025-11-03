@@ -3,6 +3,7 @@ import Header from './components/layout/Header/Header.jsx'
 import Sidebar from './components/layout/Sidebar/Sidebar.jsx'
 import TaskList from './components/tasks/TaskList/TaskList.jsx'
 import { DEFAULT_FILTER, FILTERS } from './constants/filters.js'
+import { useSidebar } from './hooks/useSidebar.js'
 import { useToolbar } from './hooks/useToolbar.js'
 import { useTasks } from './hooks/useTasks.js'
 import { getLocalDateString, isWithinNextSevenDays } from './utils/date.js'
@@ -11,6 +12,7 @@ import './App.css'
 function App() {
   useToolbar()
 
+  const { isSidebarOpen, toggleSidebar, closeSidebar } = useSidebar()
   const [currentFilter, setCurrentFilter] = useState(DEFAULT_FILTER)
   const {
     tasks,
@@ -58,12 +60,14 @@ function App() {
 
   return (
     <div className="app">
-      <Header />
+      <Header onMenuClick={toggleSidebar} />
       <div className="main-container">
         <Sidebar
           currentFilter={currentFilter}
           onFilterChange={setCurrentFilter}
           filterCounts={filterCounts}
+          isOpen={isSidebarOpen}
+          onClose={closeSidebar}
         />
         <TaskList
           tasks={filteredTasks}

@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Previne zoom em inputs no iOS */
+  -webkit-text-size-adjust: 100%;
+  /* Melhora scrolling em mobile */
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -11,9 +18,45 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #fafafa;
+  /* Previne pull-to-refresh no mobile */
+  overscroll-behavior-y: contain;
 }
 
 #root {
   width: 100%;
   height: 100vh;
+  /* Previne scrolling horizontal */
+  overflow-x: hidden;
+}
+
+/* Melhorias de acessibilidade e UX */
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea,
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Focus visível para acessibilidade */
+*:focus-visible {
+  outline: 2px solid #db4c3f;
+  outline-offset: 2px;
+}
+
+/* Media queries base */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
 }

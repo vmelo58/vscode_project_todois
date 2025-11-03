@@ -2,10 +2,32 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  position: relative;
 }
 
 .main-container {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
+}
+
+/* Responsivo - Mobile */
+@media (max-width: 768px) {
+  .app {
+    /* Ajusta altura considerando barra de endereço móvel */
+    height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+
+  .main-container {
+    flex-direction: column;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-container {
+    gap: 0;
+  }
 }

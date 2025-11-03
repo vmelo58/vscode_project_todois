@@ -1,4 +1,3 @@
-import React from 'react'
 import { FILTERS } from '../../../constants/filters.js'
 import { PROJECTS } from '../../../constants/projects.js'
 import './Sidebar.css'
@@ -22,12 +21,19 @@ const PROJECT_FILTERS = [
   FILTERS.work,
 ]
 
-function Sidebar({ currentFilter, onFilterChange, filterCounts }) {
+function Sidebar({ currentFilter, onFilterChange, filterCounts, isOpen, onClose }) {
+  const handleFilterClick = (filterId) => {
+    onFilterChange(filterId)
+    if (onClose) {
+      onClose()
+    }
+  }
+
   const renderNavItem = (filter) => (
     <li
       key={filter.id}
       className={`nav-item ${currentFilter === filter.id ? 'active' : ''}`}
-      onClick={() => onFilterChange(filter.id)}
+      onClick={() => handleFilterClick(filter.id)}
     >
       <span className="nav-icon">{FILTER_ICONS[filter.id]}</span>
       <span className="nav-text">{filter.label}</span>
@@ -36,20 +42,25 @@ function Sidebar({ currentFilter, onFilterChange, filterCounts }) {
   )
 
   return (
-    <aside className="sidebar">
-      <nav className="sidebar-nav">
-        <ul className="nav-list">
-          {PRIMARY_FILTERS.map(renderNavItem)}
-        </ul>
+    <>
+      {/* Overlay para mobile */}
+      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
 
-        <div className="projects-section">
-          <h3 className="section-title">Projetos</h3>
+      <aside className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+        <nav className="sidebar-nav">
           <ul className="nav-list">
-            {PROJECT_FILTERS.map(renderNavItem)}
+            {PRIMARY_FILTERS.map(renderNavItem)}
           </ul>
-        </div>
-      </nav>
-    </aside>
+
+          <div className="projects-section">
+            <h3 className="section-title">Projetos</h3>
+            <ul className="nav-list">
+              {PROJECT_FILTERS.map(renderNavItem)}
+            </ul>
+          </div>
+        </nav>
+      </aside>
+    </>
   )
 }
 

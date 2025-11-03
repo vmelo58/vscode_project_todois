@@ -311,3 +311,140 @@
 .cancel-button:hover {
   background-color: #e0e0e0;
 }
+
+/* Responsivo - Mobile */
+@media (max-width: 768px) {
+  .task-list-container {
+    padding: 20px 16px;
+  }
+
+  .task-list-header h1 {
+    font-size: 24px;
+  }
+
+  .task-count {
+    font-size: 13px;
+  }
+
+  .add-task-form {
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .task-input {
+    padding: 12px;
+    font-size: 16px; /* Previne zoom no iOS */
+  }
+
+  .add-task-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .task-item {
+    padding: 16px 12px;
+    gap: 10px;
+  }
+
+  .task-checkbox input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+  }
+
+  .task-title {
+    font-size: 15px;
+  }
+
+  .task-metadata {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .task-date,
+  .task-project {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+
+  .edit-button,
+  .delete-button {
+    opacity: 1; /* Sempre visível em mobile */
+    padding: 8px;
+    font-size: 18px;
+  }
+
+  /* Edit mode mobile */
+  .task-edit-expanded {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .task-edit-input {
+    font-size: 16px; /* Previne zoom no iOS */
+    padding: 12px;
+  }
+
+  .task-metadata-edit {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .metadata-field {
+    min-width: 100%;
+  }
+
+  .metadata-select,
+  .metadata-input {
+    font-size: 16px; /* Previne zoom no iOS */
+    padding: 10px 12px;
+  }
+
+  .edit-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .save-button,
+  .cancel-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .task-list-container {
+    padding: 32px 24px;
+  }
+
+  .task-list-header h1 {
+    font-size: 26px;
+  }
+
+  .add-task-form {
+    padding: 14px;
+  }
+
+  .task-item {
+    padding: 14px;
+  }
+}
+
+/* Touch devices - torna botões maiores */
+@media (hover: none) and (pointer: coarse) {
+  .edit-button,
+  .delete-button,
+  .icon-button,
+  .add-task-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .nav-item {
+    min-height: 48px;
+  }
+}
