@@ -28,14 +28,19 @@ function TaskList({
   onUpdatePriority,
   onUpdateDueDate,
   onUpdateProject,
+  onUpdateDescription,
+  onUpdateLabels,
   onReorderTasks,
 }) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [editingText, setEditingText] = useState('')
+  const [editingDescription, setEditingDescription] = useState('')
   const [editingPriority, setEditingPriority] = useState('')
   const [editingDueDate, setEditingDueDate] = useState('')
   const [editingProject, setEditingProject] = useState(DEFAULT_PROJECT_ID)
+  const [editingLabels, setEditingLabels] = useState([])
+  const [newLabelInput, setNewLabelInput] = useState('')
 
   // Configure drag sensors
   const sensors = useSensors(
@@ -103,9 +108,12 @@ function TaskList({
   const startEditing = (task) => {
     setEditingTaskId(task.id)
     setEditingText(task.title)
+    setEditingDescription(task.description || '')
     setEditingPriority(task.priority ? String(task.priority) : '')
     setEditingDueDate(task.dueDate || '')
     setEditingProject(task.projectId)
+    setEditingLabels(task.labels || [])
+    setNewLabelInput('')
   }
 
   // Salva a edição
@@ -118,25 +126,57 @@ function TaskList({
       const projectValue = editingProject || DEFAULT_PROJECT_ID
 
       onUpdateTitle(taskId, sanitizedTitle)
+      onUpdateDescription(taskId, editingDescription)
       onUpdatePriority(taskId, priorityValue)
       onUpdateDueDate(taskId, dueDateValue)
       onUpdateProject(taskId, projectValue)
+      onUpdateLabels(taskId, editingLabels)
     }
 
     setEditingTaskId(null)
     setEditingText('')
+    setEditingDescription('')
     setEditingPriority('')
     setEditingDueDate('')
     setEditingProject(DEFAULT_PROJECT_ID)
+    setEditingLabels([])
+    setNewLabelInput('')
   }
 
   // Cancela a edição
   const cancelEdit = () => {
     setEditingTaskId(null)
     setEditingText('')
+    setEditingDescription('')
     setEditingPriority('')
     setEditingDueDate('')
     setEditingProject(DEFAULT_PROJECT_ID)
+    setEditingLabels([])
+    setNewLabelInput('')
+  }
+
+  // Adiciona nova label
+  const handleAddLabel = (e) => {
+    e.preventDefault()
+    const trimmedLabel = newLabelInput.trim()
+
+    if (trimmedLabel && !editingLabels.includes(trimmedLabel)) {
+      setEditingLabels([...editingLabels, trimmedLabel])
+      setNewLabelInput('')
+    }
+  }
+
+  // Remove label
+  const handleRemoveLabel = (labelToRemove) => {
+    setEditingLabels(editingLabels.filter(label => label !== labelToRemove))
+  }
+
+  // Handler para tecla Enter no input de label
+  const handleLabelKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddLabel(e)
+    }
   }
 
   // Handler para tecla Enter ao editar
@@ -190,14 +230,55 @@ function TaskList({
                 editingTaskId === task.id ? (
                   <div key={task.id} className="task-edit-expanded-wrapper">
                     <div className="task-edit-expanded">
+                      {/* Título */}
                       <input
                         type="text"
-                        className="task-edit-input"
+                        className="task-edit-input task-edit-title"
+                        placeholder="Nome da tarefa"
                         value={editingText}
                         onChange={(e) => setEditingText(e.target.value)}
-                        onKeyDown={(e) => handleEditKeyPress(e, task.id)}
                         autoFocus
                       />
+
+                      {/* Descrição */}
+                      <textarea
+                        className="task-edit-input task-edit-description"
+                        placeholder="Descrição"
+                        value={editingDescription}
+                        onChange={(e) => setEditingDescription(e.target.value)}
+                        rows={3}
+                      />
+
+                      {/* Labels */}
+                      {editingLabels.length > 0 && (
+                        <div className="task-labels-container">
+                          {editingLabels.map((label, index) => (
+                            <span key={index} className="task-label-pill">
+                              <span className="task-label-text">{label}</span>
+                              <button
+                                type="button"
+                                className="task-label-remove"
+                                onClick={() => handleRemoveLabel(label)}
+                                aria-label={`Remover label ${label}`}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Input para adicionar labels */}
+                      <div className="task-label-input-wrapper">
+                        <input
+                          type="text"
+                          className="task-label-input"
+                          placeholder="+ Adicionar label"
+                          value={newLabelInput}
+                          onChange={(e) => setNewLabelInput(e.target.value)}
+                          onKeyDown={handleLabelKeyPress}
+                        />
+                      </div>
 
                       <div className="task-metadata-edit">
                         {/* Prioridade */}

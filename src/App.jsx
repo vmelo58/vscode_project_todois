@@ -26,6 +26,8 @@ function App() {
     updateTaskPriority,
     updateTaskDueDate,
     updateTaskProject,
+    updateTaskDescription,
+    updateTaskLabels,
     reorderTasks,
   } = useTasks()
 
@@ -140,6 +142,8 @@ function App() {
               onUpdatePriority={updateTaskPriority}
               onUpdateDueDate={updateTaskDueDate}
               onUpdateProject={updateTaskProject}
+              onUpdateDescription={updateTaskDescription}
+              onUpdateLabels={updateTaskLabels}
               onReorderTasks={reorderTasks}
             />
           )}
