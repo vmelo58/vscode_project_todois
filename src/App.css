@@ -21,6 +21,17 @@
   box-sizing: border-box;
 }
 
+/* Loading spinner for lazy loaded components */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 16px;
+  color: var(--color-text-muted);
+  padding: 40px;
+}
+
 /* Responsivo - Mobile */
 @media (max-width: 768px) {
   .app {

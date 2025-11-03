@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import TaskCard from './TaskCard.jsx'
 import { formatColumnHeader, getLocalDateString } from '../../../utils/date.js'
 import './WeekColumn.css'
@@ -107,4 +107,4 @@ function WeekColumn({ date, tasks, onAddTask, onToggleComplete, onEdit, onDelete
   )
 }
 
-export default WeekColumn
+export default memo(WeekColumn)

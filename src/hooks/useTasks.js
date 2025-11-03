@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_PROJECT_ID, PROJECTS } from '../constants/projects.js'
 import { getLocalDateString } from '../utils/date.js'
 
 const STORAGE_KEY = 'todoist-tasks'
+const STORAGE_DEBOUNCE_MS = 500 // Debounce localStorage writes for better performance
 const ID_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 const ID_LENGTH = 21
 
@@ -86,13 +87,46 @@ const readStorage = () => {
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState(readStorage)
+  const saveTimeoutRef = useRef(null)
 
+  // Debounced localStorage save for better performance
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) {
       return
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+    // Clear previous timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Schedule new save
+    saveTimeoutRef.current = setTimeout(() => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+    }, STORAGE_DEBOUNCE_MS)
+
+    // Cleanup: Save immediately on unmount to prevent data loss
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+        // Force immediate save before unmount to prevent data loss
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+      }
+    }
+  }, [tasks])
+
+  // Save immediately before page unload to prevent data loss
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return
+    }
+
+    const handleBeforeUnload = () => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [tasks])
 
   const addTask = useCallback((title, options = {}) => {

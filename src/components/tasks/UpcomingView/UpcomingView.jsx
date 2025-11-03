@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import WeekColumn from './WeekColumn.jsx'
 import { useWeekNavigation } from '../../../hooks/useWeekNavigation.js'
 import { DEFAULT_PROJECT_ID, PROJECTS } from '../../../constants/projects.js'
@@ -215,4 +215,4 @@ function UpcomingView({
   )
 }
 
-export default UpcomingView
+export default memo(UpcomingView)

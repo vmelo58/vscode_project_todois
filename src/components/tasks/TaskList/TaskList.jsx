@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { DEFAULT_FILTER, FILTERS } from '../../../constants/filters.js'
 import { DEFAULT_PROJECT_ID, PROJECTS } from '../../../constants/projects.js'
 import { PRIORITIES, PRIORITY_OPTIONS } from '../../../constants/priorities.js'
@@ -269,4 +269,4 @@ function TaskList({
   )
 }
 
-export default TaskList
+export default memo(TaskList)

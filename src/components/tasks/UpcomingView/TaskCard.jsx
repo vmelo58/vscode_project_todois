@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { PRIORITIES } from '../../../constants/priorities.js'
 import { PROJECTS, DEFAULT_PROJECT_ID } from '../../../constants/projects.js'
 import './TaskCard.css'
@@ -67,4 +68,4 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
   )
 }
 
-export default TaskCard
+export default memo(TaskCard)

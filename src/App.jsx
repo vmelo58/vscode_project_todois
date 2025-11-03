@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import Header from './components/layout/Header/Header.jsx'
 import Sidebar from './components/layout/Sidebar/Sidebar.jsx'
-import TaskList from './components/tasks/TaskList/TaskList.jsx'
-import UpcomingView from './components/tasks/UpcomingView/UpcomingView.jsx'
+
+// Lazy load views for better performance
+const TaskList = lazy(() => import('./components/tasks/TaskList/TaskList.jsx'))
+const UpcomingView = lazy(() => import('./components/tasks/UpcomingView/UpcomingView.jsx'))
 import { DEFAULT_FILTER, FILTERS } from './constants/filters.js'
 import { useSidebar } from './hooks/useSidebar.js'
 import { useToolbar } from './hooks/useToolbar.js'
@@ -26,6 +28,7 @@ function App() {
     updateTaskProject,
   } = useTasks()
 
+  // Optimize: Calculate date once outside reduce loop
   const filterCounts = useMemo(() => {
     const referenceDate = new Date()
     const today = getLocalDateString(referenceDate)
@@ -113,30 +116,32 @@ function App() {
           isMobile={isMobile}
           onClose={closeSidebar}
         />
-        {currentFilter === FILTERS.upcoming.id ? (
-          <UpcomingView
-            tasks={tasks}
-            onAddTask={addTask}
-            onDeleteTask={deleteTask}
-            onToggleComplete={toggleTaskComplete}
-            onUpdateTitle={updateTaskTitle}
-            onUpdatePriority={updateTaskPriority}
-            onUpdateDueDate={updateTaskDueDate}
-            onUpdateProject={updateTaskProject}
-          />
-        ) : (
-          <TaskList
-            tasks={filteredTasks}
-            currentFilter={currentFilter}
-            onAddTask={addTask}
-            onDeleteTask={deleteTask}
-            onToggleComplete={toggleTaskComplete}
-            onUpdateTitle={updateTaskTitle}
-            onUpdatePriority={updateTaskPriority}
-            onUpdateDueDate={updateTaskDueDate}
-            onUpdateProject={updateTaskProject}
-          />
-        )}
+        <Suspense fallback={<div className="loading-spinner">Carregando...</div>}>
+          {currentFilter === FILTERS.upcoming.id ? (
+            <UpcomingView
+              tasks={tasks}
+              onAddTask={addTask}
+              onDeleteTask={deleteTask}
+              onToggleComplete={toggleTaskComplete}
+              onUpdateTitle={updateTaskTitle}
+              onUpdatePriority={updateTaskPriority}
+              onUpdateDueDate={updateTaskDueDate}
+              onUpdateProject={updateTaskProject}
+            />
+          ) : (
+            <TaskList
+              tasks={filteredTasks}
+              currentFilter={currentFilter}
+              onAddTask={addTask}
+              onDeleteTask={deleteTask}
+              onToggleComplete={toggleTaskComplete}
+              onUpdateTitle={updateTaskTitle}
+              onUpdatePriority={updateTaskPriority}
+              onUpdateDueDate={updateTaskDueDate}
+              onUpdateProject={updateTaskProject}
+            />
+          )}
+        </Suspense>
       </div>
     </div>
   )

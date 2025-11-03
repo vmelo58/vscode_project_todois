@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import './Header.css'
 
 function Header({ onMenuClick, isMobile, isSidebarOpen }) {
@@ -35,4 +36,4 @@ function Header({ onMenuClick, isMobile, isSidebarOpen }) {
   )
 }
 
-export default Header
+export default memo(Header)

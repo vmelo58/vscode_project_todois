@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { FILTERS } from '../../../constants/filters.js'
 import { PROJECTS } from '../../../constants/projects.js'
 import './Sidebar.css'
@@ -81,4 +82,4 @@ function Sidebar({ currentFilter, onFilterChange, filterCounts, isOpen, isMobile
   )
 }
 
-export default Sidebar
+export default memo(Sidebar)
