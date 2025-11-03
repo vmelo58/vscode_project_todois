@@ -23,40 +23,50 @@ const generateId = () => {
 const normalizeTask = (task) => ({
   ...task,
   id: String(task.id),
+  description: task.description || '',
+  labels: task.labels || [],
 })
 
 const buildSeedTasks = () => ([
   {
     id: 'seed-1',
     title: 'Bem-vindo ao seu Todoist Clone!',
+    description: 'Explore as novas funcionalidades e organize suas tarefas',
     completed: false,
     priority: null,
     dueDate: null,
     projectId: DEFAULT_PROJECT_ID,
+    labels: [],
   },
   {
     id: 'seed-2',
-    title: 'Experimente definir prioridade 🚩',
+    title: 'Experimente definir prioridade',
+    description: 'Use as prioridades para destacar tarefas importantes',
     completed: false,
     priority: 1,
     dueDate: null,
     projectId: DEFAULT_PROJECT_ID,
+    labels: ['importante'],
   },
   {
     id: 'seed-3',
-    title: 'Adicione uma data de vencimento 📅',
+    title: 'Adicione uma data de vencimento',
+    description: '',
     completed: false,
     priority: null,
     dueDate: getLocalDateString(),
     projectId: PROJECTS.personal.id,
+    labels: [],
   },
   {
     id: 'seed-4',
-    title: 'Organize por projetos 📁',
+    title: 'Organize por projetos',
+    description: 'Mantenha suas tarefas organizadas por contexto',
     completed: false,
     priority: 2,
     dueDate: null,
     projectId: PROJECTS.work.id,
+    labels: ['trabalho'],
   },
 ]).map(normalizeTask)
 
@@ -165,7 +175,13 @@ export const useTasks = () => {
       return
     }
 
-    const { dueDate = null, projectId = DEFAULT_PROJECT_ID, priority = null } = options
+    const {
+      dueDate = null,
+      projectId = DEFAULT_PROJECT_ID,
+      priority = null,
+      description = '',
+      labels = []
+    } = options
     const id = generateId()
 
     setTasks((prev) => [
@@ -173,10 +189,12 @@ export const useTasks = () => {
       {
         id,
         title: trimmedTitle,
+        description,
         completed: false,
         priority,
         dueDate,
         projectId,
+        labels,
       },
     ])
   }, [])
@@ -218,6 +236,21 @@ export const useTasks = () => {
     patchTask(taskId, { projectId })
   }, [patchTask])
 
+  const updateTaskDescription = useCallback((taskId, description) => {
+    patchTask(taskId, { description })
+  }, [patchTask])
+
+  const updateTaskLabels = useCallback((taskId, labels) => {
+    patchTask(taskId, { labels })
+  }, [patchTask])
+
+  const reorderTasks = useCallback((taskIds) => {
+    setTasks((prev) => {
+      const taskMap = new Map(prev.map(task => [task.id, task]))
+      return taskIds.map(id => taskMap.get(id)).filter(Boolean)
+    })
+  }, [])
+
   return {
     tasks,
     addTask,
@@ -227,5 +260,8 @@ export const useTasks = () => {
     updateTaskPriority,
     updateTaskDueDate,
     updateTaskProject,
+    updateTaskDescription,
+    updateTaskLabels,
+    reorderTasks,
   }
 }
