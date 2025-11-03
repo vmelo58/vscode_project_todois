@@ -16,6 +16,7 @@ import { DEFAULT_FILTER, FILTERS } from '../../../constants/filters.js'
 import { DEFAULT_PROJECT_ID, PROJECTS } from '../../../constants/projects.js'
 import { PRIORITY_OPTIONS } from '../../../constants/priorities.js'
 import SortableTaskItem from '../TaskItem/SortableTaskItem.jsx'
+import ListToolbar from '../ListToolbar/ListToolbar.jsx'
 import './TaskList.css'
 
 function TaskList({
@@ -42,6 +43,56 @@ function TaskList({
   const [editingLabels, setEditingLabels] = useState([])
   const [newLabelInput, setNewLabelInput] = useState('')
 
+  // Toolbar state
+  const [showFilter, setShowFilter] = useState('all') // 'all', 'active', 'completed'
+  const [sortBy, setSortBy] = useState('manual') // 'manual', 'date', 'priority', 'name'
+
+  // Filter tasks based on showFilter
+  const filteredTasks = useMemo(() => {
+    if (showFilter === 'active') {
+      return tasks.filter(task => !task.completed)
+    } else if (showFilter === 'completed') {
+      return tasks.filter(task => task.completed)
+    }
+    return tasks // 'all'
+  }, [tasks, showFilter])
+
+  // Sort tasks based on sortBy
+  const sortedTasks = useMemo(() => {
+    const tasksToSort = [...filteredTasks]
+
+    if (sortBy === 'manual') {
+      return tasksToSort // Keep original order
+    }
+
+    return tasksToSort.sort((a, b) => {
+      if (sortBy === 'date') {
+        // Sort by due date (tasks without date go to the end)
+        if (!a.dueDate && !b.dueDate) return 0
+        if (!a.dueDate) return 1
+        if (!b.dueDate) return -1
+        return new Date(a.dueDate) - new Date(b.dueDate)
+      } else if (sortBy === 'priority') {
+        // Sort by priority (higher priority first, null at the end)
+        const priorityA = a.priority ?? -1
+        const priorityB = b.priority ?? -1
+        return priorityB - priorityA
+      } else if (sortBy === 'name') {
+        // Sort alphabetically by title
+        return a.title.localeCompare(b.title, 'pt-BR')
+      }
+      return 0
+    })
+  }, [filteredTasks, sortBy])
+
+  // Count tasks by status
+  const activeCount = useMemo(() =>
+    tasks.filter(task => !task.completed).length, [tasks]
+  )
+  const completedCount = useMemo(() =>
+    tasks.filter(task => task.completed).length, [tasks]
+  )
+
   // Configure drag sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -54,16 +105,16 @@ function TaskList({
     })
   )
 
-  // Task IDs para o DndContext
-  const taskIds = useMemo(() => tasks.map(task => task.id), [tasks])
+  // Task IDs para o DndContext (use sortedTasks instead of tasks)
+  const taskIds = useMemo(() => sortedTasks.map(task => task.id), [sortedTasks])
 
   // Handler para quando o drag termina
   const handleDragEnd = (event) => {
     const { active, over } = event
 
     if (over && active.id !== over.id) {
-      const oldIndex = tasks.findIndex(task => task.id === active.id)
-      const newIndex = tasks.findIndex(task => task.id === over.id)
+      const oldIndex = sortedTasks.findIndex(task => task.id === active.id)
+      const newIndex = sortedTasks.findIndex(task => task.id === over.id)
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newTaskIds = [...taskIds]
@@ -84,8 +135,8 @@ function TaskList({
   }, [currentFilter])
 
   const tasksCountLabel = useMemo(() => (
-    `${tasks.length} ${tasks.length === 1 ? 'tarefa' : 'tarefas'}`
-  ), [tasks.length])
+    `${sortedTasks.length} ${sortedTasks.length === 1 ? 'tarefa' : 'tarefas'}`
+  ), [sortedTasks.length])
 
   // Função chamada quando o usuário digita no input
   const handleInputChange = (e) => {
@@ -212,11 +263,29 @@ function TaskList({
         </button>
       </form>
 
+      {/* List Toolbar */}
+      {tasks.length > 0 && (
+        <ListToolbar
+          showFilter={showFilter}
+          sortBy={sortBy}
+          taskCount={tasks.length}
+          activeCount={activeCount}
+          completedCount={completedCount}
+          onShowFilterChange={setShowFilter}
+          onSortByChange={setSortBy}
+        />
+      )}
+
       {/* Lista de tarefas */}
       {tasks.length === 0 ? (
         <div className="task-empty-state" role="status" aria-live="polite">
           <span className="task-empty-icon" aria-hidden="true">🗒️</span>
           <p>Nenhuma tarefa por aqui. Que tal adicionar a próxima?</p>
+        </div>
+      ) : sortedTasks.length === 0 ? (
+        <div className="task-empty-state" role="status" aria-live="polite">
+          <span className="task-empty-icon" aria-hidden="true">🔍</span>
+          <p>Nenhuma tarefa encontrada com este filtro.</p>
         </div>
       ) : (
         <DndContext
@@ -226,7 +295,7 @@ function TaskList({
         >
           <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
             <div className="tasks-flat-list">
-              {tasks.map((task) => (
+              {sortedTasks.map((task) => (
                 editingTaskId === task.id ? (
                   <div key={task.id} className="task-edit-expanded-wrapper">
                     <div className="task-edit-expanded">
