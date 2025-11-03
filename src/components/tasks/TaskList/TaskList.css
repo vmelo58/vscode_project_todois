@@ -80,6 +80,14 @@
   transform: translateY(1px);
 }
 
+/* Flat list container - no gaps, just dividers */
+.tasks-flat-list {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  overflow: hidden;
+}
+
 .tasks {
   list-style: none;
   padding: 0;
@@ -270,8 +278,17 @@
   color: var(--color-primary);
 }
 
+.task-edit-expanded-wrapper {
+  border-bottom: 1px solid var(--color-border);
+  padding: 10px 16px;
+  background-color: var(--color-hover);
+}
+
+.task-edit-expanded-wrapper:last-child {
+  border-bottom: none;
+}
+
 .task-edit-expanded {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;

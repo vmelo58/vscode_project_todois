@@ -4,11 +4,12 @@ import './TaskCard.css'
 
 function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
   const cardClassName = `task-card ${task.completed ? 'completed' : ''}`
+  const checkboxClassName = `task-card-checkbox ${task.priority ? `priority-${task.priority}` : ''}`
 
   return (
     <div className={cardClassName}>
-      {/* Checkbox */}
-      <div className="task-card-checkbox">
+      {/* Checkbox com borda colorida por prioridade */}
+      <div className={checkboxClassName}>
         <input
           type="checkbox"
           id={`card-${task.id}`}
@@ -22,13 +23,17 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
       {/* Content */}
       <div className="task-card-content">
         <span className="task-card-title">{task.title}</span>
+        {task.description && (
+          <div className="task-card-description">{task.description}</div>
+        )}
         <TaskMetadata task={task} compact />
       </div>
 
       {/* Botões de ação - aparecem no hover */}
       <div className="task-card-actions">
         <button
-          className="task-card-edit"
+          type="button"
+          className="task-card-action-btn"
           onClick={() => onEdit(task)}
           title="Editar tarefa"
           aria-label="Editar tarefa"
@@ -36,7 +41,8 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
           ✏️
         </button>
         <button
-          className="task-card-delete"
+          type="button"
+          className="task-card-action-btn"
           onClick={() => onDelete(task.id)}
           title="Deletar tarefa"
           aria-label="Deletar tarefa"

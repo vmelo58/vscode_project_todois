@@ -1,0 +1,216 @@
+/* Flat Line Task Item - Todoist Style */
+.task-item-flat {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  transition: background-color var(--transition-fast);
+  position: relative;
+  min-height: 48px;
+}
+
+.task-item-flat:hover {
+  background-color: var(--color-hover);
+}
+
+/* Remove border from last item */
+.task-item-flat:last-child {
+  border-bottom: none;
+}
+
+/* Completed state */
+.task-item-flat.task-item-completed {
+  opacity: 0.6;
+}
+
+.task-item-flat.task-item-completed .task-title-flat {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+/* Checkbox com borda colorida por prioridade */
+.task-checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+  position: relative;
+}
+
+.task-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-text-muted);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-fast);
+  background-color: var(--color-surface);
+}
+
+.task-checkbox input[type="checkbox"]:hover {
+  border-color: var(--color-text-strong);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.task-checkbox input[type="checkbox"]:checked {
+  background-color: var(--color-text-muted);
+  border-color: var(--color-text-muted);
+}
+
+.task-checkbox input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Priority colors on checkbox */
+.task-checkbox.priority-p1 input[type="checkbox"] {
+  border-color: #db4c3f;
+}
+
+.task-checkbox.priority-p1 input[type="checkbox"]:hover {
+  background-color: rgba(219, 76, 63, 0.1);
+  border-color: #db4c3f;
+}
+
+.task-checkbox.priority-p1 input[type="checkbox"]:checked {
+  background-color: #db4c3f;
+  border-color: #db4c3f;
+}
+
+.task-checkbox.priority-p2 input[type="checkbox"] {
+  border-color: #f59e0b;
+}
+
+.task-checkbox.priority-p2 input[type="checkbox"]:hover {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: #f59e0b;
+}
+
+.task-checkbox.priority-p2 input[type="checkbox"]:checked {
+  background-color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.task-checkbox.priority-p3 input[type="checkbox"] {
+  border-color: #4a90e2;
+}
+
+.task-checkbox.priority-p3 input[type="checkbox"]:hover {
+  background-color: rgba(74, 144, 226, 0.1);
+  border-color: #4a90e2;
+}
+
+.task-checkbox.priority-p3 input[type="checkbox"]:checked {
+  background-color: #4a90e2;
+  border-color: #4a90e2;
+}
+
+/* Task content */
+.task-content-flat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.task-title-flat {
+  font-size: 14px;
+  color: var(--color-text-strong);
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.task-description-flat {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-top: -2px;
+}
+
+/* Quick Actions - sempre visíveis no hover */
+.task-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.task-item-flat:hover .task-quick-actions {
+  opacity: 1;
+}
+
+.quick-action-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.quick-action-btn:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.quick-action-btn:active {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.quick-action-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Label do checkbox - esconde o label nativo */
+.task-checkbox label {
+  display: none;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .task-item-flat {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  /* Quick actions sempre visíveis no mobile */
+  .task-quick-actions {
+    opacity: 1;
+  }
+
+  .quick-action-btn {
+    padding: 8px;
+  }
+
+  .quick-action-icon {
+    font-size: 18px;
+  }
+
+  .task-title-flat {
+    font-size: 15px;
+  }
+}
+
+/* Touch devices */
+@media (hover: none) {
+  .task-quick-actions {
+    opacity: 1;
+  }
+}
