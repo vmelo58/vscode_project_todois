@@ -8,15 +8,32 @@
   gap: 12px;
   align-items: flex-start;
   position: relative;
-  transition: box-shadow 0.2s, border-color 0.2s, transform 0.12s;
+  transition: border-color 0.2s, transform 0.12s;
   cursor: pointer;
   box-shadow: var(--color-elevation-shadow);
+}
+
+/* Optimize: Use pseudo-element for shadow animation */
+.task-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.task-card:hover::before,
+.task-card:focus-within::before {
+  opacity: 1;
 }
 
 .task-card:hover,
 .task-card:focus-within {
   border-color: var(--color-danger-soft);
-  box-shadow: var(--color-shadow-hover, 0 14px 24px rgba(15, 23, 42, 0.12));
 }
 
 .task-card:active {
@@ -65,14 +82,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.task-card-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  justify-content: space-between;
+  gap: 8px;
 }
 
 .task-card-title {

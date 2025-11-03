@@ -11,12 +11,29 @@
   max-height: calc(100vh - 220px);
   border: 1px solid rgba(15, 23, 42, 0.06);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s ease;
+  position: relative;
+}
+
+/* Optimize: Use pseudo-element for shadow animation */
+.week-column::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .week-column:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+}
+
+.week-column:hover::after {
+  opacity: 1;
 }
 
 .week-column-today {

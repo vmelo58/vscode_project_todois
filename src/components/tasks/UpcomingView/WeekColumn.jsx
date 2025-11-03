@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import TaskCard from './TaskCard.jsx'
 import { formatColumnHeader, getLocalDateString } from '../../../utils/date.js'
 import './WeekColumn.css'
@@ -16,15 +16,20 @@ function WeekColumn({ date, tasks, onAddTask, onToggleComplete, onEdit, onDelete
     [tasks, dateString],
   )
 
-  const handleAddClick = () => {
+  const handleAddClick = useCallback(() => {
     setShowAddInput(true)
-  }
+  }, [])
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     setNewTaskTitle(e.target.value)
-  }
+  }, [])
 
-  const handleSubmit = (e) => {
+  const handleCancel = useCallback(() => {
+    setNewTaskTitle('')
+    setShowAddInput(false)
+  }, [])
+
+  const handleSubmit = useCallback((e) => {
     e.preventDefault()
     const sanitizedTitle = newTaskTitle.trim()
 
@@ -34,18 +39,13 @@ function WeekColumn({ date, tasks, onAddTask, onToggleComplete, onEdit, onDelete
       setNewTaskTitle('')
       setShowAddInput(false)
     }
-  }
+  }, [newTaskTitle, onAddTask, dateString])
 
-  const handleCancel = () => {
-    setNewTaskTitle('')
-    setShowAddInput(false)
-  }
-
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       handleCancel()
     }
-  }
+  }, [handleCancel])
 
   return (
     <div className={`week-column ${isToday ? 'week-column-today' : ''}`}>

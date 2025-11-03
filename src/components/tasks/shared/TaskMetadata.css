@@ -1,0 +1,48 @@
+/* Task Metadata Shared Styles */
+.task-metadata,
+.task-metadata-compact {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.task-metadata-compact {
+  gap: 8px;
+}
+
+.task-priority {
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-date,
+.task-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.task-date {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.task-project {
+  background-color: var(--color-info-bg);
+  color: var(--color-info-text);
+}
+
+.task-project-icon {
+  font-size: 14px;
+}
+
+.task-project-name {
+  font-weight: 500;
+}

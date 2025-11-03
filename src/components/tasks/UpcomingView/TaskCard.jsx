@@ -1,11 +1,9 @@
 import { memo } from 'react'
-import { PRIORITIES } from '../../../constants/priorities.js'
-import { PROJECTS, DEFAULT_PROJECT_ID } from '../../../constants/projects.js'
+import TaskMetadata from '../shared/TaskMetadata.jsx'
 import './TaskCard.css'
 
 function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
   const cardClassName = `task-card ${task.completed ? 'completed' : ''}`
-  const priorityInfo = task.priority ? PRIORITIES[task.priority] : null
 
   return (
     <div className={cardClassName}>
@@ -23,26 +21,8 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
 
       {/* Content */}
       <div className="task-card-content">
-        <div className="task-card-header">
-          <span className="task-card-title">{task.title}</span>
-          {/* Prioridade - ícone pequeno */}
-          {priorityInfo && (
-            <span
-              className="task-card-priority"
-              style={{ color: priorityInfo.color }}
-              title={priorityInfo.name}
-            >
-              {priorityInfo.icon}
-            </span>
-          )}
-        </div>
-
-        {/* Projeto - tag */}
-        {task.projectId && task.projectId !== DEFAULT_PROJECT_ID && PROJECTS[task.projectId] && (
-          <span className="task-card-project">
-            {PROJECTS[task.projectId].icon} {PROJECTS[task.projectId].name}
-          </span>
-        )}
+        <span className="task-card-title">{task.title}</span>
+        <TaskMetadata task={task} compact />
       </div>
 
       {/* Botões de ação - aparecem no hover */}

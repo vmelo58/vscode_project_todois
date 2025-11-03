@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useCallback } from 'react'
 import { FILTERS } from '../../../constants/filters.js'
 import { PROJECTS } from '../../../constants/projects.js'
 import './Sidebar.css'
@@ -23,14 +23,14 @@ const PROJECT_FILTERS = [
 ]
 
 function Sidebar({ currentFilter, onFilterChange, filterCounts, isOpen, isMobile, onClose }) {
-  const handleFilterClick = (filterId) => {
+  const handleFilterClick = useCallback((filterId) => {
     onFilterChange(filterId)
     if (isMobile && onClose) {
       onClose()
     }
-  }
+  }, [onFilterChange, isMobile, onClose])
 
-  const renderNavItem = (filter) => (
+  const renderNavItem = useCallback((filter) => (
     <li key={filter.id}>
       <button
         type="button"
@@ -44,7 +44,7 @@ function Sidebar({ currentFilter, onFilterChange, filterCounts, isOpen, isMobile
         <span className="task-count-badge">{filterCounts[filter.id] ?? 0}</span>
       </button>
     </li>
-  )
+  ), [currentFilter, filterCounts, handleFilterClick])
 
   return (
     <>
