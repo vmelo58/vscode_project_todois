@@ -26,6 +26,7 @@
   cursor: pointer;
   transition: background-color 0.2s;
   color: #202020;
+  position: relative;
 }
 
 .nav-item:hover {
@@ -35,6 +36,25 @@
 .nav-item.active {
   background-color: #ffefe5;
   font-weight: 600;
+}
+
+.task-count-badge {
+  margin-left: auto;
+  font-size: 11px;
+  color: #6c6c6c;
+  background-color: #f3f3f3;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.nav-item.active .task-count-badge {
+  background-color: #ffd4b8;
+  color: #db4c3f;
+}
+
+.nav-item:hover .task-count-badge {
+  background-color: #e0e0e0;
 }
 
 .nav-icon {

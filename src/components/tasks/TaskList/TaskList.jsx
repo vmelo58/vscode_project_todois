@@ -1,42 +1,33 @@
 import { useState } from 'react'
+import { DEFAULT_FILTER, FILTERS } from '../../../constants/filters.js'
+import { DEFAULT_PROJECT_ID, PROJECTS } from '../../../constants/projects.js'
+import { PRIORITIES, PRIORITY_OPTIONS } from '../../../constants/priorities.js'
+import { formatDateLabel } from '../../../utils/date.js'
 import './TaskList.css'
 
-// Configuração de projetos
-const PROJECTS = {
-  inbox: { id: 'inbox', name: 'Entrada', icon: '📥' },
-  personal: { id: 'personal', name: 'Pessoal', icon: '📌' },
-  work: { id: 'work', name: 'Trabalho', icon: '💼' }
-}
-
-// Configuração de prioridades
-const PRIORITIES = {
-  1: { level: 1, name: 'P1', color: '#d1453b', icon: '🚩' },
-  2: { level: 2, name: 'P2', color: '#eb8909', icon: '🚩' },
-  3: { level: 3, name: 'P3', color: '#246fe0', icon: '🚩' },
-  4: { level: 4, name: 'P4', color: '#999', icon: '🚩' }
-}
-
-// Função auxiliar para formatar data
-const formatDate = (dateString) => {
-  if (!dateString) return null
-  const date = new Date(dateString)
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
-  if (date.toDateString() === today.toDateString()) return 'Hoje'
-  if (date.toDateString() === tomorrow.toDateString()) return 'Amanhã'
-
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-}
-
-function TaskList({ tasks, onAddTask, onDeleteTask, onToggleComplete, onUpdateTitle, onUpdatePriority, onUpdateDueDate, onUpdateProject }) {
+function TaskList({
+  tasks,
+  currentFilter,
+  onAddTask,
+  onDeleteTask,
+  onToggleComplete,
+  onUpdateTitle,
+  onUpdatePriority,
+  onUpdateDueDate,
+  onUpdateProject,
+}) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [editingText, setEditingText] = useState('')
-  const [editingPriority, setEditingPriority] = useState(null)
-  const [editingDueDate, setEditingDueDate] = useState(null)
-  const [editingProject, setEditingProject] = useState('inbox')
+  const [editingPriority, setEditingPriority] = useState('')
+  const [editingDueDate, setEditingDueDate] = useState('')
+  const [editingProject, setEditingProject] = useState(DEFAULT_PROJECT_ID)
+
+  // Mapeia o filtro para o nome exibido
+  const getFilterName = () => {
+    const fallbackFilter = FILTERS[DEFAULT_FILTER]
+    return FILTERS[currentFilter]?.label ?? fallbackFilter.label
+  }
 
   // Função chamada quando o usuário digita no input
   const handleInputChange = (e) => {
@@ -47,9 +38,11 @@ function TaskList({ tasks, onAddTask, onDeleteTask, onToggleComplete, onUpdateTi
   const handleSubmit = (e) => {
     e.preventDefault() // Previne o reload da página
 
-    if (newTaskTitle.trim() !== '') {
-      onAddTask(newTaskTitle) // Chama a função do App.jsx
-      setNewTaskTitle('') // Limpa o input
+    const sanitizedTitle = newTaskTitle.trim()
+
+    if (sanitizedTitle) {
+      onAddTask(sanitizedTitle)
+      setNewTaskTitle('')
     }
   }
 
@@ -57,33 +50,40 @@ function TaskList({ tasks, onAddTask, onDeleteTask, onToggleComplete, onUpdateTi
   const startEditing = (task) => {
     setEditingTaskId(task.id)
     setEditingText(task.title)
-    setEditingPriority(task.priority)
+    setEditingPriority(task.priority ? String(task.priority) : '')
     setEditingDueDate(task.dueDate || '')
     setEditingProject(task.projectId)
   }
 
   // Salva a edição
   const saveEdit = (taskId) => {
-    if (editingText.trim() !== '') {
-      onUpdateTitle(taskId, editingText)
-      onUpdatePriority(taskId, editingPriority)
-      onUpdateDueDate(taskId, editingDueDate || null)
-      onUpdateProject(taskId, editingProject)
+    const sanitizedTitle = editingText.trim()
+
+    if (sanitizedTitle) {
+      const priorityValue = editingPriority ? parseInt(editingPriority, 10) : null
+      const dueDateValue = editingDueDate || null
+      const projectValue = editingProject || DEFAULT_PROJECT_ID
+
+      onUpdateTitle(taskId, sanitizedTitle)
+      onUpdatePriority(taskId, priorityValue)
+      onUpdateDueDate(taskId, dueDateValue)
+      onUpdateProject(taskId, projectValue)
     }
+
     setEditingTaskId(null)
     setEditingText('')
-    setEditingPriority(null)
-    setEditingDueDate(null)
-    setEditingProject('inbox')
+    setEditingPriority('')
+    setEditingDueDate('')
+    setEditingProject(DEFAULT_PROJECT_ID)
   }
 
   // Cancela a edição
   const cancelEdit = () => {
     setEditingTaskId(null)
     setEditingText('')
-    setEditingPriority(null)
-    setEditingDueDate(null)
-    setEditingProject('inbox')
+    setEditingPriority('')
+    setEditingDueDate('')
+    setEditingProject(DEFAULT_PROJECT_ID)
   }
 
   // Handler para tecla Enter ao editar
@@ -98,8 +98,8 @@ function TaskList({ tasks, onAddTask, onDeleteTask, onToggleComplete, onUpdateTi
   return (
     <main className="task-list-container">
       <div className="task-list-header">
-        <h1>Entrada</h1>
-        <p className="task-count">{tasks.length} tarefas</p>
+        <h1>{getFilterName()}</h1>
+        <p className="task-count">{tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}</p>
       </div>
 
       {/* Formulário para adicionar nova tarefa */}
@@ -147,15 +147,15 @@ function TaskList({ tasks, onAddTask, onDeleteTask, onToggleComplete, onUpdateTi
                   <div className="metadata-field">
                     <label>🚩 Prioridade:</label>
                     <select
-                      value={editingPriority || ''}
-                      onChange={(e) => setEditingPriority(e.target.value ? parseInt(e.target.value) : null)}
+                      value={editingPriority}
+                      onChange={(e) => setEditingPriority(e.target.value)}
                       className="metadata-select"
                     >
-                      <option value="">Sem prioridade</option>
-                      <option value="1">P1 - Urgente</option>
-                      <option value="2">P2 - Alta</option>
-                      <option value="3">P3 - Média</option>
-                      <option value="4">P4 - Baixa</option>
+                      {PRIORITY_OPTIONS.map((option) => (
+                        <option key={option.value || 'none'} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -178,18 +178,20 @@ function TaskList({ tasks, onAddTask, onDeleteTask, onToggleComplete, onUpdateTi
                       onChange={(e) => setEditingProject(e.target.value)}
                       className="metadata-select"
                     >
-                      <option value="inbox">📥 Entrada</option>
-                      <option value="personal">📌 Pessoal</option>
-                      <option value="work">💼 Trabalho</option>
+                      {Object.values(PROJECTS).map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.icon} {project.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
                 <div className="edit-actions">
-                  <button className="save-button" onClick={() => saveEdit(task.id)}>
+                  <button type="button" className="save-button" onClick={() => saveEdit(task.id)}>
                     Salvar
                   </button>
-                  <button className="cancel-button" onClick={cancelEdit}>
+                  <button type="button" className="cancel-button" onClick={cancelEdit}>
                     Cancelar
                   </button>
                 </div>
@@ -216,12 +218,12 @@ function TaskList({ tasks, onAddTask, onDeleteTask, onToggleComplete, onUpdateTi
                     {/* Data */}
                     {task.dueDate && (
                       <span className="task-date" title={task.dueDate}>
-                        📅 {formatDate(task.dueDate)}
+                        📅 {formatDateLabel(task.dueDate)}
                       </span>
                     )}
 
                     {/* Projeto */}
-                    {task.projectId && task.projectId !== 'inbox' && (
+                    {task.projectId && task.projectId !== DEFAULT_PROJECT_ID && PROJECTS[task.projectId] && (
                       <span className="task-project" title={PROJECTS[task.projectId].name}>
                         {PROJECTS[task.projectId].icon} {PROJECTS[task.projectId].name}
                       </span>
