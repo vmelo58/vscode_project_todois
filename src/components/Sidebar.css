@@ -1,0 +1,59 @@
+.sidebar {
+  width: 280px;
+  background-color: #fafafa;
+  border-right: 1px solid #e0e0e0;
+  padding: 24px 0;
+  overflow-y: auto;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 24px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #202020;
+}
+
+.nav-item:hover {
+  background-color: #f3f3f3;
+}
+
+.nav-item.active {
+  background-color: #ffefe5;
+  font-weight: 600;
+}
+
+.nav-icon {
+  font-size: 18px;
+}
+
+.nav-text {
+  font-size: 14px;
+}
+
+.projects-section {
+  margin-top: 16px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6c6c6c;
+  padding: 8px 24px;
+  margin-bottom: 4px;
+}

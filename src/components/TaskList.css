@@ -1,0 +1,313 @@
+.task-list-container {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.task-list-header {
+  margin-bottom: 24px;
+}
+
+.task-list-header h1 {
+  font-size: 28px;
+  color: #202020;
+  margin-bottom: 4px;
+}
+
+.task-count {
+  font-size: 14px;
+  color: #6c6c6c;
+}
+
+/* Formulário de adicionar tarefa */
+.add-task-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.task-input {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.task-input:focus {
+  border-color: #db4c3f;
+}
+
+.add-task-button {
+  background-color: #db4c3f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-task-button:hover {
+  background-color: #c53727;
+}
+
+/* Lista de tarefas */
+.tasks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f3f3;
+  transition: background-color 0.2s;
+}
+
+.task-item:hover {
+  background-color: #fafafa;
+}
+
+.task-checkbox {
+  position: relative;
+}
+
+.task-checkbox input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.task-checkbox input[type="checkbox"]:hover {
+  border-color: #db4c3f;
+}
+
+.task-checkbox input[type="checkbox"]:checked {
+  background-color: #db4c3f;
+  border-color: #db4c3f;
+}
+
+.task-checkbox input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.task-title {
+  flex: 1;
+  font-size: 14px;
+  color: #202020;
+  padding: 4px 8px;
+  user-select: text;
+}
+
+/* Tarefa concluída */
+.task-item.completed .task-title {
+  text-decoration: line-through;
+  color: #9e9e9e;
+  opacity: 0.7;
+}
+
+/* Botão de editar */
+.edit-button {
+  background: none;
+  border: none;
+  color: #6c6c6c;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.task-item:hover .edit-button {
+  opacity: 1;
+}
+
+.edit-button:hover {
+  background-color: #f0f8ff;
+  color: #4a90e2;
+}
+
+/* Botão de deletar */
+.delete-button {
+  background: none;
+  border: none;
+  color: #6c6c6c;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.task-item:hover .delete-button {
+  opacity: 1;
+}
+
+.delete-button:hover {
+  background-color: #fee;
+  color: #db4c3f;
+}
+
+/* Task content container */
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Metadata inline */
+.task-metadata {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.task-priority {
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-date,
+.task-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background-color: #f3f3f3;
+  border-radius: 4px;
+  color: #6c6c6c;
+  font-size: 11px;
+}
+
+.task-date {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.task-project {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+/* Modo de edição expandido */
+.task-edit-expanded {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.task-edit-input {
+  width: 100%;
+  border: 2px solid #db4c3f;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+/* Metadata edit fields */
+.task-metadata-edit {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.metadata-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 150px;
+}
+
+.metadata-field label {
+  font-size: 12px;
+  color: #6c6c6c;
+  font-weight: 600;
+}
+
+.metadata-select,
+.metadata-input {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  background-color: white;
+}
+
+.metadata-select:focus,
+.metadata-input:focus {
+  border-color: #db4c3f;
+}
+
+/* Edit actions */
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.save-button,
+.cancel-button {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-button {
+  background-color: #db4c3f;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #c53727;
+}
+
+.cancel-button {
+  background-color: #f3f3f3;
+  color: #6c6c6c;
+}
+
+.cancel-button:hover {
+  background-color: #e0e0e0;
+}
