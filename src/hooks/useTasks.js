@@ -3,10 +3,30 @@ import { DEFAULT_PROJECT_ID, PROJECTS } from '../constants/projects.js'
 import { getLocalDateString } from '../utils/date.js'
 
 const STORAGE_KEY = 'todoist-tasks'
+const ID_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+const ID_LENGTH = 21
+
+const generateId = () => {
+  let result = ''
+  for (let index = 0; index < ID_LENGTH; index += 1) {
+    const random =
+      typeof crypto !== 'undefined' && crypto.getRandomValues
+        ? crypto.getRandomValues(new Uint32Array(1))[0] % ID_ALPHABET.length
+        : Math.floor(Math.random() * ID_ALPHABET.length)
+    result += ID_ALPHABET.charAt(random)
+  }
+
+  return result
+}
+
+const normalizeTask = (task) => ({
+  ...task,
+  id: String(task.id),
+})
 
 const buildSeedTasks = () => ([
   {
-    id: 1,
+    id: 'seed-1',
     title: 'Bem-vindo ao seu Todoist Clone!',
     completed: false,
     priority: null,
@@ -14,7 +34,7 @@ const buildSeedTasks = () => ([
     projectId: DEFAULT_PROJECT_ID,
   },
   {
-    id: 2,
+    id: 'seed-2',
     title: 'Experimente definir prioridade 🚩',
     completed: false,
     priority: 1,
@@ -22,7 +42,7 @@ const buildSeedTasks = () => ([
     projectId: DEFAULT_PROJECT_ID,
   },
   {
-    id: 3,
+    id: 'seed-3',
     title: 'Adicione uma data de vencimento 📅',
     completed: false,
     priority: null,
@@ -30,14 +50,14 @@ const buildSeedTasks = () => ([
     projectId: PROJECTS.personal.id,
   },
   {
-    id: 4,
+    id: 'seed-4',
     title: 'Organize por projetos 📁',
     completed: false,
     priority: 2,
     dueDate: null,
     projectId: PROJECTS.work.id,
   },
-])
+]).map(normalizeTask)
 
 const readStorage = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -57,7 +77,7 @@ const readStorage = () => {
       return buildSeedTasks()
     }
 
-    return parsed
+    return parsed.map(normalizeTask)
   } catch (error) {
     console.warn('Falha ao carregar tarefas salvas. Usando dados padrão.', error)
     return buildSeedTasks()
@@ -75,22 +95,25 @@ export const useTasks = () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
   }, [tasks])
 
-  const addTask = useCallback((title) => {
+  const addTask = useCallback((title, options = {}) => {
     const trimmedTitle = title.trim()
 
     if (!trimmedTitle) {
       return
     }
 
+    const { dueDate = null, projectId = DEFAULT_PROJECT_ID, priority = null } = options
+    const id = generateId()
+
     setTasks((prev) => [
       ...prev,
       {
-        id: Date.now(),
+        id,
         title: trimmedTitle,
         completed: false,
-        priority: null,
-        dueDate: null,
-        projectId: DEFAULT_PROJECT_ID,
+        priority,
+        dueDate,
+        projectId,
       },
     ])
   }, [])

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { DEFAULT_FILTER, FILTERS } from '../../../constants/filters.js'
 import { DEFAULT_PROJECT_ID, PROJECTS } from '../../../constants/projects.js'
 import { PRIORITIES, PRIORITY_OPTIONS } from '../../../constants/priorities.js'
@@ -23,11 +23,15 @@ function TaskList({
   const [editingDueDate, setEditingDueDate] = useState('')
   const [editingProject, setEditingProject] = useState(DEFAULT_PROJECT_ID)
 
-  // Mapeia o filtro para o nome exibido
-  const getFilterName = () => {
+  // Label amigável do filtro atual
+  const filterName = useMemo(() => {
     const fallbackFilter = FILTERS[DEFAULT_FILTER]
     return FILTERS[currentFilter]?.label ?? fallbackFilter.label
-  }
+  }, [currentFilter])
+
+  const tasksCountLabel = useMemo(() => (
+    `${tasks.length} ${tasks.length === 1 ? 'tarefa' : 'tarefas'}`
+  ), [tasks.length])
 
   // Função chamada quando o usuário digita no input
   const handleInputChange = (e) => {
@@ -98,8 +102,8 @@ function TaskList({
   return (
     <main className="task-list-container">
       <div className="task-list-header">
-        <h1>{getFilterName()}</h1>
-        <p className="task-count">{tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}</p>
+        <h1>{filterName}</h1>
+        <p className="task-count">{tasksCountLabel}</p>
       </div>
 
       {/* Formulário para adicionar nova tarefa */}
@@ -110,22 +114,32 @@ function TaskList({
           placeholder="+ Adicionar tarefa"
           value={newTaskTitle}
           onChange={handleInputChange}
+          aria-label="Descrição da nova tarefa"
+          autoComplete="off"
         />
         <button type="submit" className="add-task-button">
-          Adicionar
+          <span aria-hidden="true">＋</span>
+          <span>Adicionar tarefa</span>
         </button>
       </form>
 
       {/* Lista de tarefas */}
-      <ul className="tasks">
-        {tasks.map((task) => (
-          <li key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
+      {tasks.length === 0 ? (
+        <div className="task-empty-state" role="status" aria-live="polite">
+          <span className="task-empty-icon" aria-hidden="true">🗒️</span>
+          <p>Nenhuma tarefa por aqui. Que tal adicionar a próxima?</p>
+        </div>
+      ) : (
+        <ul className="tasks">
+          {tasks.map((task) => (
+            <li key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
             <div className="task-checkbox">
               <input
                 type="checkbox"
                 id={`task-${task.id}`}
                 checked={task.completed}
                 onChange={() => onToggleComplete(task.id)}
+                aria-label={`Marcar tarefa "${task.title}" como concluída`}
               />
               <label htmlFor={`task-${task.id}`}></label>
             </div>
@@ -247,9 +261,10 @@ function TaskList({
                 </button>
               </>
             )}
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   )
 }

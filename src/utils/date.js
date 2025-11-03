@@ -43,3 +43,55 @@ export const isWithinNextSevenDays = (dateString, reference = new Date()) => {
 
   return candidate >= referenceDate && candidate <= maxDate
 }
+
+// Retorna o nome do dia em português
+export const getDayName = (date) => {
+  const today = getLocalDateString()
+  const tomorrow = getLocalDateString(new Date(Date.now() + MS_PER_DAY))
+  const dateStr = getLocalDateString(date)
+
+  if (dateStr === today) {
+    return 'Hoje'
+  }
+
+  if (dateStr === tomorrow) {
+    return 'Amanhã'
+  }
+
+  const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
+  return dayNames[date.getDay()]
+}
+
+// Formata cabeçalho da coluna: "Nov 3 · Hoje"
+export const formatColumnHeader = (date) => {
+  const dayName = getDayName(date)
+  const formatted = date.toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' })
+  // Capitaliza primeira letra do mês
+  const parts = formatted.split(' ')
+  parts[1] = parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
+
+  return `${parts[1]} ${parts[0]} · ${dayName}`
+}
+
+// Retorna array de N dias a partir de uma data inicial
+export const getWeekDays = (startDate = new Date(), count = 6) => {
+  const days = []
+  const current = new Date(startDate)
+
+  // Normaliza para meia-noite
+  current.setHours(0, 0, 0, 0)
+
+  for (let i = 0; i < count; i++) {
+    days.push(new Date(current))
+    current.setDate(current.getDate() + 1)
+  }
+
+  return days
+}
+
+// Adiciona/subtrai dias de uma data
+export const addDays = (date, days) => {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}

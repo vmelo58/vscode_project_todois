@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Header from './components/layout/Header/Header.jsx'
 import Sidebar from './components/layout/Sidebar/Sidebar.jsx'
 import TaskList from './components/tasks/TaskList/TaskList.jsx'
+import UpcomingView from './components/tasks/UpcomingView/UpcomingView.jsx'
 import { DEFAULT_FILTER, FILTERS } from './constants/filters.js'
+import { useSidebar } from './hooks/useSidebar.js'
 import { useToolbar } from './hooks/useToolbar.js'
 import { useTasks } from './hooks/useTasks.js'
 import { getLocalDateString, isWithinNextSevenDays } from './utils/date.js'
@@ -11,6 +13,7 @@ import './App.css'
 function App() {
   useToolbar()
 
+  const { isSidebarOpen, isMobile, toggleSidebar, closeSidebar } = useSidebar()
   const [currentFilter, setCurrentFilter] = useState(DEFAULT_FILTER)
   const {
     tasks,
@@ -24,26 +27,53 @@ function App() {
   } = useTasks()
 
   const filterCounts = useMemo(() => {
-    const today = getLocalDateString()
+    const referenceDate = new Date()
+    const today = getLocalDateString(referenceDate)
 
-    return {
-      [FILTERS.inbox.id]: tasks.length,
-      [FILTERS.today.id]: tasks.filter((task) => task.dueDate === today).length,
-      [FILTERS.next7days.id]: tasks.filter((task) => isWithinNextSevenDays(task.dueDate)).length,
-      [FILTERS.personal.id]: tasks.filter((task) => task.projectId === FILTERS.personal.id).length,
-      [FILTERS.work.id]: tasks.filter((task) => task.projectId === FILTERS.work.id).length,
-    }
+    return tasks.reduce(
+      (acc, task) => {
+        if (task.dueDate === today) {
+          acc[FILTERS.today.id] += 1
+        }
+
+        if (isWithinNextSevenDays(task.dueDate, referenceDate)) {
+          acc[FILTERS.upcoming.id] += 1
+        }
+
+        if (task.projectId === FILTERS.personal.id) {
+          acc[FILTERS.personal.id] += 1
+        }
+
+        if (task.projectId === FILTERS.work.id) {
+          acc[FILTERS.work.id] += 1
+        }
+
+        return acc
+      },
+      {
+        [FILTERS.inbox.id]: tasks.length,
+        [FILTERS.today.id]: 0,
+        [FILTERS.upcoming.id]: 0,
+        [FILTERS.personal.id]: 0,
+        [FILTERS.work.id]: 0,
+      },
+    )
   }, [tasks])
 
   const filteredTasks = useMemo(() => {
-    const today = getLocalDateString()
+    if (currentFilter === FILTERS.inbox.id) {
+      return tasks
+    }
+
+    const referenceDate = new Date()
+    const today = getLocalDateString(referenceDate)
 
     switch (currentFilter) {
       case FILTERS.today.id:
         return tasks.filter((task) => task.dueDate === today)
 
-      case FILTERS.next7days.id:
-        return tasks.filter((task) => isWithinNextSevenDays(task.dueDate))
+      case FILTERS.upcoming.id:
+        return tasks.filter((task) => isWithinNextSevenDays(task.dueDate, referenceDate))
 
       case FILTERS.personal.id:
         return tasks.filter((task) => task.projectId === FILTERS.personal.id)
@@ -56,26 +86,57 @@ function App() {
     }
   }, [currentFilter, tasks])
 
+  useEffect(() => {
+    if (!isMobile || !isSidebarOpen) {
+      return
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        closeSidebar()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isMobile, isSidebarOpen, closeSidebar])
+
   return (
     <div className="app">
-      <Header />
+      <Header onMenuClick={toggleSidebar} isMobile={isMobile} isSidebarOpen={isSidebarOpen} />
       <div className="main-container">
         <Sidebar
           currentFilter={currentFilter}
           onFilterChange={setCurrentFilter}
           filterCounts={filterCounts}
+          isOpen={isSidebarOpen}
+          isMobile={isMobile}
+          onClose={closeSidebar}
         />
-        <TaskList
-          tasks={filteredTasks}
-          currentFilter={currentFilter}
-          onAddTask={addTask}
-          onDeleteTask={deleteTask}
-          onToggleComplete={toggleTaskComplete}
-          onUpdateTitle={updateTaskTitle}
-          onUpdatePriority={updateTaskPriority}
-          onUpdateDueDate={updateTaskDueDate}
-          onUpdateProject={updateTaskProject}
-        />
+        {currentFilter === FILTERS.upcoming.id ? (
+          <UpcomingView
+            tasks={tasks}
+            onAddTask={addTask}
+            onDeleteTask={deleteTask}
+            onToggleComplete={toggleTaskComplete}
+            onUpdateTitle={updateTaskTitle}
+            onUpdatePriority={updateTaskPriority}
+            onUpdateDueDate={updateTaskDueDate}
+            onUpdateProject={updateTaskProject}
+          />
+        ) : (
+          <TaskList
+            tasks={filteredTasks}
+            currentFilter={currentFilter}
+            onAddTask={addTask}
+            onDeleteTask={deleteTask}
+            onToggleComplete={toggleTaskComplete}
+            onUpdateTitle={updateTaskTitle}
+            onUpdatePriority={updateTaskPriority}
+            onUpdateDueDate={updateTaskDueDate}
+            onUpdateProject={updateTaskProject}
+          />
+        )}
       </div>
     </div>
   )

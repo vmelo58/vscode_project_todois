@@ -2,10 +2,50 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  position: relative;
+  /* Previne scroll no container principal */
+  overflow: hidden;
 }
 
 .main-container {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
+  align-items: stretch;
+  /* Garante que o scroll funcione nos filhos */
+  min-height: 0;
+  width: 100%;
+  gap: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Responsivo - Mobile */
+@media (max-width: 768px) {
+  .app {
+    /* Ajusta altura considerando barra de endereço móvel */
+    height: 100dvh;
+    min-height: -webkit-fill-available;
+    /* Touch optimization */
+    touch-action: pan-y;
+  }
+
+  .main-container {
+    flex-direction: column;
+    /* Permite scroll interno */
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+    padding: 0;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-container {
+    padding: 0;
+    gap: 0;
+  }
 }
